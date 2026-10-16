@@ -45,7 +45,7 @@ admin/member ser alle installatører i teamet, installatør bare sin egen. Belø
 lib/engine/   Regnemotor. Ren TypeScript, ingen DB/UI. Alle beløp ut i øre.
 app/api/      API-ruter
 lib/server/   DB-tilkobling, innlogging/tilgang, CORS og feilhåndtering
-db/           SQL: 001 schema, 002 import, 003 estimates.quote_version_id, 004 regler/produktdata
+db/           SQL: 001 schema, 002 import, 003 estimates.quote_version_id, 004 regler/produktdata, 005 sletting av estimat/lead
 docs/         opprydding.md: hva som slettes til slutt
 ```
 

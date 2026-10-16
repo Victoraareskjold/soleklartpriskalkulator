@@ -27,12 +27,17 @@ export const POST = handler<{ id: string }>(async (req, { id }) => {
       select id, result from calc.quote_versions where id = ${input.quoteVersionId} and calculation_id = ${id}`;
     if (!version) throw new HttpError(404, "Fant ikke versjonen", "NOT_FOUND");
 
-    const [estimate] = await tx<{ signed_at: Date | null; simulation_pdf_url: string | null }[]>`
-      select signed_at, price_data->>'simulationPdfUrl' as simulation_pdf_url
+    const [estimate] = await tx<{ signed_at: Date | null; simulation_pdf_url: string | null; battery_section: unknown }[]>`
+      select signed_at, price_data->>'simulationPdfUrl' as simulation_pdf_url, price_data->'batterySection' as battery_section
       from public.estimates where id = ${input.estimateId} for update`;
     if (estimate.signed_at) throw new HttpError(409, "Estimatet er signert og kan ikke endres", "SIGNED");
 
-    const priceData = toLegacyPriceData(version.result, { quoteVersionId: version.id, simulationPdfUrl: estimate.simulation_pdf_url });
+    // batterySection (batterioppsettet for tilbudssiden) settes av dashboardet og er ikke en del av
+    // kalkylen. Den må følge med, ellers forsvinner den når price_data skrives på nytt her.
+    const priceData = {
+      ...toLegacyPriceData(version.result, { quoteVersionId: version.id, simulationPdfUrl: estimate.simulation_pdf_url }),
+      ...(estimate.battery_section ? { batterySection: estimate.battery_section } : {}),
+    };
     await tx`
       update public.estimates
       set price_data = ${asJson(priceData)}, quote_version_id = ${version.id}, updated_at = now()

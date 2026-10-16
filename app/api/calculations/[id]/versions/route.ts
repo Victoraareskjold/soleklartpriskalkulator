@@ -50,12 +50,14 @@ export const POST = handler<{ id: string }>(async (req, { id }) => {
     }
 
     let simulationPdfUrl: string | null = null;
+    let batterySection: unknown = null;
     if (calc.estimate_id) {
-      const [estimate] = await tx<{ signed_at: Date | null; simulation_pdf_url: string | null }[]>`
-        select signed_at, price_data->>'simulationPdfUrl' as simulation_pdf_url
+      const [estimate] = await tx<{ signed_at: Date | null; simulation_pdf_url: string | null; battery_section: unknown }[]>`
+        select signed_at, price_data->>'simulationPdfUrl' as simulation_pdf_url, price_data->'batterySection' as battery_section
         from public.estimates where id = ${calc.estimate_id} for update`;
       if (estimate?.signed_at) throw new HttpError(409, "Estimatet er signert og kan ikke endres", "SIGNED");
       simulationPdfUrl = estimate?.simulation_pdf_url ?? null;
+      batterySection = estimate?.battery_section ?? null;
     }
 
     const [previous] = await tx<{ id: string; version: number }[]>`
@@ -79,7 +81,11 @@ export const POST = handler<{ id: string }>(async (req, { id }) => {
       where id = ${id}
       returning lock_version`;
 
-    const priceData = toLegacyPriceData(result, { quoteVersionId: saved.id, simulationPdfUrl });
+    // batterySection hører til tilbudssiden (settes av dashboardet), ikke til kalkylen: behold den.
+    const priceData = {
+      ...toLegacyPriceData(result, { quoteVersionId: saved.id, simulationPdfUrl }),
+      ...(batterySection ? { batterySection } : {}),
+    };
     if (calc.estimate_id) {
       await tx`
         update public.estimates
