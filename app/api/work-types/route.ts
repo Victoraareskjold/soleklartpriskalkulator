@@ -19,8 +19,8 @@ export const POST = handler(async (req) => {
   const input = await body(req, schema);
 
   const [row] = await sql`
-    insert into calc.work_types (team_id, grp, name, unit, unit_confirmed, sort_order)
-    values (${teamId}, ${input.group}, ${input.name}, ${input.unit}, true,
+    insert into calc.work_types (team_id, grp, name, unit, unit_confirmed, support_eligible, sort_order)
+    values (${teamId}, ${input.group}, ${input.name}, ${input.unit}, true, ${input.group !== "batteri"},
             (select coalesce(max(sort_order), 0) + 1 from calc.work_types where team_id = ${teamId} and grp = ${input.group}))
     returning id`;
   return { id: row.id };

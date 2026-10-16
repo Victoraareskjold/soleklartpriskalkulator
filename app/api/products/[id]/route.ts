@@ -1,8 +1,8 @@
 import { z } from "zod";
 import { requireAccess, requireAdmin } from "@/lib/server/auth";
-import { sql } from "@/lib/server/db";
+import { asJson, sql } from "@/lib/server/db";
 import { body, handler, HttpError, preflight } from "@/lib/server/http";
-import { kroner, uuid } from "@/lib/server/schemas";
+import { kroner, specs, uuid } from "@/lib/server/schemas";
 
 export const OPTIONS = preflight;
 
@@ -15,6 +15,8 @@ const schema = z
     supplierId: uuid,
     categoryId: uuid,
     active: z.boolean(),
+    /** Erstatter produktdataene. Sendes uten "derived" når de er kontrollert. */
+    specs,
   })
   .partial();
 
@@ -34,6 +36,7 @@ export const PATCH = handler<{ id: string }>(async (req, { id }) => {
   if (input.supplierId !== undefined) changes.supplier_id = input.supplierId;
   if (input.categoryId !== undefined) changes.category_id = input.categoryId;
   if (input.active !== undefined) changes.active = input.active;
+  if (input.specs !== undefined) changes.specs = asJson(input.specs);
   if (input.price !== undefined) {
     changes.price_ore = input.price;
     changes.price_updated_at = new Date();

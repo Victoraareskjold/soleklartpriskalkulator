@@ -5,7 +5,7 @@ import { draftSchema } from "@/lib/quote/draft";
 import { toLegacyPriceData } from "@/lib/quote/legacy";
 import { loadCalculation } from "@/lib/quote/access";
 import { requireAccess } from "@/lib/server/auth";
-import { sql } from "@/lib/server/db";
+import { asJson, sql } from "@/lib/server/db";
 import { body, handler, HttpError, preflight } from "@/lib/server/http";
 
 export const OPTIONS = preflight;
@@ -68,14 +68,14 @@ export const POST = handler<{ id: string }>(async (req, { id }) => {
         total_ex_vat_ore, total_inc_vat_ore, idempotency_key, created_by)
       values (
         ${id}, ${version}, ${previous?.id ?? null}, ${calc.estimate_id}, ${result.engineVersion},
-        ${sql.json(JSON.parse(JSON.stringify({ ...built.input, rules: built.rules })))}, ${sql.json(JSON.parse(JSON.stringify(result)))},
+        ${asJson({ ...built.input, rules: built.rules })}, ${asJson(result)},
         ${result.totals.totalExVat}, ${result.totals.totalIncVat}, ${idempotencyKey}, ${access.userId})
       returning id`;
 
     const [updated] = await tx<{ lock_version: number }[]>`
       update calc.calculations
-      set draft_input = ${sql.json(input.draft)}, title = ${input.draft.projectName || "Kalkyle"},
-          customer_type = ${input.draft.customerType}, lock_version = lock_version + 1
+      set draft_input = ${asJson(input.draft)}, title = ${input.draft.projectName || "Kalkyle"},
+          customer_type = ${input.draft.customerType}, lock_version = lock_version + 1, updated_by = ${access.userId}
       where id = ${id}
       returning lock_version`;
 
@@ -83,7 +83,7 @@ export const POST = handler<{ id: string }>(async (req, { id }) => {
     if (calc.estimate_id) {
       await tx`
         update public.estimates
-        set price_data = ${sql.json(JSON.parse(JSON.stringify(priceData)))}, quote_version_id = ${saved.id}, updated_at = now()
+        set price_data = ${asJson(priceData)}, quote_version_id = ${saved.id}, updated_at = now()
         where id = ${calc.estimate_id}`;
     }
 

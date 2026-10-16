@@ -31,6 +31,8 @@ export interface LegacyPriceData {
   totalOverride: null;
   /** Ny kalkulator: peker til den låste versjonen. Ignoreres av gamle lesere. */
   quoteVersionId?: string;
+  /** Ny kalkulator: anslått støtte (vises separat, inngår ikke i total). Ignoreres av gamle lesere. */
+  estimatedSupport?: { provider: string | null; amount: number; mode: string } | null;
 }
 
 const kr = (ore: number) => ore / 100;
@@ -72,6 +74,9 @@ export function toLegacyPriceData(
     total: kr(result.totals.totalExVat),
     "total inkl. alt": kr(result.totals.totalIncVat),
     totalOverride: null,
+    estimatedSupport: result.support && result.support.amount > 0
+      ? { provider: result.support.provider, amount: kr(result.support.amount), mode: result.support.mode }
+      : null,
     ...(options.quoteVersionId ? { quoteVersionId: options.quoteVersionId } : {}),
   };
 }

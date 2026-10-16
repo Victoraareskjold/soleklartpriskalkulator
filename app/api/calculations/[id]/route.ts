@@ -2,7 +2,7 @@ import { z } from "zod";
 import { draftSchema } from "@/lib/quote/draft";
 import { assertLeadAndEstimate, loadCalculation, toCalculationDto, type CalculationRow } from "@/lib/quote/access";
 import { requireAccess } from "@/lib/server/auth";
-import { sql } from "@/lib/server/db";
+import { asJson, sql } from "@/lib/server/db";
 import { body, handler, HttpError, preflight } from "@/lib/server/http";
 import { uuid } from "@/lib/server/schemas";
 
@@ -35,8 +35,8 @@ export const PUT = handler<{ id: string }>(async (req, { id }) => {
 
   const [row] = await sql<CalculationRow[]>`
     update calc.calculations
-    set draft_input = ${sql.json(input.draft)}, title = ${input.draft.projectName || calculation.title},
-        customer_type = ${input.draft.customerType}, estimate_id = ${estimateId}, lock_version = lock_version + 1
+    set draft_input = ${asJson(input.draft)}, title = ${input.draft.projectName || calculation.title},
+        customer_type = ${input.draft.customerType}, estimate_id = ${estimateId}, lock_version = lock_version + 1, updated_by = ${access.userId}
     where id = ${id} and lock_version = ${input.lockVersion}
     returning *`;
   if (!row) throw new HttpError(409, "Kalkylen er endret av noen andre. Last inn på nytt.", "CONFLICT");

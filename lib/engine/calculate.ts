@@ -9,7 +9,7 @@
 //   6. Mva. på alt inkl. kommisjon
 //   7. Støtte vises separat og endrer ikke faktura eller kommisjon
 import { CalculationError } from "./errors";
-import { allocate, multiply, nonNegative, percentOf, sum, toOre } from "./money";
+import { allocate, multiply, nonNegative, percentOf, scale, sum, toOre } from "./money";
 import {
   DEFAULT_COMMISSION_TIERS,
   DEFAULT_NO_PANEL_COMMISSION_PERCENT,
@@ -22,10 +22,11 @@ import type {
   CalculationResult,
   LineInput,
   Ore,
+  SupportResult,
   Warning,
 } from "./types";
 
-export const ENGINE_VERSION = "0.1.0";
+export const ENGINE_VERSION = "0.2.0";
 
 const LINE_KINDS = ["product", "mount", "work"];
 const PRICE_MODES = ["auto", "fixed"];
@@ -156,6 +157,55 @@ function resolveCommission(input: CalculationInput, subtotal: Ore) {
   return { mode: commission.mode as AdjustmentMode, percent, amount, base: subtotal };
 }
 
+function resolveSupport(
+  input: CalculationInput,
+  lines: CalculatedLine[],
+  subtotal: Ore,
+  totalExVat: Ore,
+  vatPercent: number,
+): SupportResult {
+  const support = input.support ?? { mode: "manual" as const, amount: input.supportAmount ?? 0 };
+  const empty = { eligibleBaseIncVat: null, byPercent: null, byKwp: null, cap: null, kwp: null };
+
+  if (support.mode === "none") return { mode: "none", provider: null, amount: 0, ...empty };
+
+  if (support.mode === "manual") {
+    nonNegative(support.amount, "support.amount");
+    return { mode: "manual", provider: support.provider?.trim() || null, amount: toOre(support.amount, "support.amount"), ...empty };
+  }
+
+  if (support.mode !== "auto") throw new CalculationError("Ukjent støttemodus", "support.mode");
+
+  // Støtteberettigede linjer får sin forholdsmessige andel av kommisjonen, og mva. legges på.
+  const eligibleSale = sum(lines.filter((l) => l.supportEligible).map((l) => l.sale));
+  const eligibleExVat = scale(eligibleSale, totalExVat, subtotal, "support");
+  const eligibleBaseIncVat = sum([eligibleExVat, percentOf(eligibleExVat, vatPercent, "support")]);
+
+  // kWp regnes ofte ut som flyttall (36 × 0,46); avrund til 6 desimaler før kontroll.
+  const kwp = nonNegative(typeof support.kwp === "number" ? Number(support.kwp.toFixed(6)) : support.kwp, "support.kwp");
+  const maxKwp = nonNegative(support.maxKwp, "support.maxKwp");
+  const cappedKwp = Math.min(kwp, maxKwp).toFixed(6);
+
+  nonNegative(support.perKwp, "support.perKwp");
+  nonNegative(support.maxAmount, "support.maxAmount");
+  if (nonNegative(support.percent, "support.percent") > 100) throw new CalculationError("Støtteprosent over 100", "support.percent");
+
+  const byPercent = percentOf(eligibleBaseIncVat, support.percent, "support.percent");
+  const byKwp = multiply(toOre(support.perKwp, "support.perKwp"), cappedKwp, "support.kwp");
+  const cap = toOre(support.maxAmount, "support.maxAmount");
+
+  return {
+    mode: "auto",
+    provider: support.provider?.trim() || null,
+    amount: Math.min(byPercent, byKwp, cap),
+    eligibleBaseIncVat,
+    byPercent,
+    byKwp,
+    cap,
+    kwp,
+  };
+}
+
 export function calculate(input: CalculationInput): CalculationResult {
   if (!input || !Array.isArray(input.lines)) throw new CalculationError("Kalkylen mangler prislinjer");
   if (input.currency && input.currency !== "NOK") {
@@ -208,10 +258,10 @@ export function calculate(input: CalculationInput): CalculationResult {
   const vat = percentOf(totalExVat, vatPercent, "vat");
   const totalIncVat = sum([totalExVat, vat]);
 
-  // 7. Støtte
-  nonNegative(input.supportAmount ?? 0, "supportAmount");
-  const support = toOre(input.supportAmount ?? 0, "supportAmount");
-  if (support > totalIncVat) throw new CalculationError("Støttebeløpet overstiger kundeprisen", "supportAmount");
+  // 7. Støtte (bare visning – endrer ikke faktura, mva. eller kommisjon)
+  const supportResult = resolveSupport(input, lines, subtotal, totalExVat, vatPercent);
+  const support = supportResult.amount;
+  if (support > totalIncVat) throw new CalculationError("Støttebeløpet overstiger kundeprisen", "support");
 
   const supplierCost = sum(lines.filter((line) => line.kind === "product").map((line) => line.reducedBase));
 
@@ -234,6 +284,7 @@ export function calculate(input: CalculationInput): CalculationResult {
       supplierCost,
       installerRemaining: subtotal - supplierCost,
     },
+    support: supportResult,
     warnings,
     ready: !warnings.some((warning) => warning.blocking),
   };

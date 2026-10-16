@@ -3,7 +3,7 @@ import { assertLeadAndEstimate, loadCalculation } from "@/lib/quote/access";
 import { toLegacyPriceData } from "@/lib/quote/legacy";
 import type { CalculationResult } from "@/lib/engine";
 import { requireAccess } from "@/lib/server/auth";
-import { sql } from "@/lib/server/db";
+import { asJson, sql } from "@/lib/server/db";
 import { body, handler, HttpError, preflight } from "@/lib/server/http";
 import { uuid } from "@/lib/server/schemas";
 
@@ -35,7 +35,7 @@ export const POST = handler<{ id: string }>(async (req, { id }) => {
     const priceData = toLegacyPriceData(version.result, { quoteVersionId: version.id, simulationPdfUrl: estimate.simulation_pdf_url });
     await tx`
       update public.estimates
-      set price_data = ${sql.json(JSON.parse(JSON.stringify(priceData)))}, quote_version_id = ${version.id}, updated_at = now()
+      set price_data = ${asJson(priceData)}, quote_version_id = ${version.id}, updated_at = now()
       where id = ${input.estimateId}`;
     await tx`update calc.calculations set estimate_id = ${input.estimateId} where id = ${id}`;
     return { ok: true, estimateId: input.estimateId, quoteVersionId: version.id };

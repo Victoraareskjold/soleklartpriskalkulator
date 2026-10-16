@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { requireAccess, requireInstallerAdmin } from "@/lib/server/auth";
 import { sql } from "@/lib/server/db";
-import { body, handler, preflight } from "@/lib/server/http";
+import { body, handler, HttpError, preflight } from "@/lib/server/http";
 import { markupGroup, percent } from "@/lib/server/schemas";
 
 export const OPTIONS = preflight;
@@ -13,6 +13,8 @@ export const PUT = handler<{ id: string }>(async (req, { id }) => {
   const access = await requireAccess(req);
   const installer = await requireInstallerAdmin(access, id);
   const input = await body(req, schema);
+  const [group] = await sql`select 1 from calc.markup_groups where team_id = ${installer.teamId} and code = ${input.markupGroup}`;
+  if (!group) throw new HttpError(400, "Ukjent påslagsgruppe", "BAD_REQUEST");
 
   if (input.percent === null) {
     await sql`delete from calc.installer_markups where installer_group_id = ${installer.id} and markup_group = ${input.markupGroup}`;

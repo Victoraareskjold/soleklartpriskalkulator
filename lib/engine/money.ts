@@ -55,6 +55,12 @@ export function multiply(amount: Ore, quantity: Decimal, field: string): Ore {
   return toSafeNumber(roundDiv(BigInt(amount) * n, d), field);
 }
 
+/** amount × numerator / denominator, avrundet til øre. */
+export function scale(amount: Ore, numerator: Ore, denominator: Ore, field: string): Ore {
+  if (denominator === 0) return 0;
+  return toSafeNumber(roundDiv(BigInt(amount) * BigInt(numerator), BigInt(denominator)), field);
+}
+
 /** Validerer at verdien er et gyldig, ikke-negativt tall og returnerer det som number. */
 export function nonNegative(value: unknown, field: string): number {
   const { n } = parseDecimal(value, field);

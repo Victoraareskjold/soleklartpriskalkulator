@@ -11,6 +11,7 @@ const schema = z
     unit: z.string().trim().min(1),
     unitConfirmed: z.boolean(),
     active: z.boolean(),
+    supportEligible: z.boolean(),
   })
   .partial();
 
@@ -27,6 +28,7 @@ export const PATCH = handler<{ id: string }>(async (req, { id }) => {
   if (input.unit !== undefined) changes.unit = input.unit;
   if (input.unitConfirmed !== undefined) changes.unit_confirmed = input.unitConfirmed;
   if (input.active !== undefined) changes.active = input.active;
+  if (input.supportEligible !== undefined) changes.support_eligible = input.supportEligible;
   if (!Object.keys(changes).length) return { ok: true };
 
   await sql`update calc.work_types set ${sql(changes)} where id = ${id}`;

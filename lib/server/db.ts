@@ -11,3 +11,6 @@ export const sql =
   globalForDb.sql ?? postgres(process.env.DATABASE_URL ?? "", { prepare: false, max: 5, idle_timeout: 20 });
 
 if (process.env.NODE_ENV !== "production") globalForDb.sql = sql;
+
+/** Lagrer en verdi som jsonb (fjerner undefined, gir postgres.js en ren JSON-verdi). */
+export const asJson = (value: unknown) => sql.json(JSON.parse(JSON.stringify(value ?? null)));

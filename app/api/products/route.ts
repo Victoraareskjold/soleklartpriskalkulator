@@ -1,8 +1,8 @@
 import { z } from "zod";
 import { requireAccess, requireAdmin } from "@/lib/server/auth";
-import { sql } from "@/lib/server/db";
+import { asJson, sql } from "@/lib/server/db";
 import { body, handler, HttpError, preflight } from "@/lib/server/http";
-import { kroner, uuid } from "@/lib/server/schemas";
+import { kroner, specs, uuid } from "@/lib/server/schemas";
 
 export const OPTIONS = preflight;
 
@@ -13,6 +13,7 @@ const schema = z.object({
   unit: z.string().trim().min(1).default("stk"),
   price: kroner,
   attachmentUrl: z.url().nullable().optional(),
+  specs: specs.optional(),
 });
 
 /** Nytt produkt i felles katalog. */
@@ -25,9 +26,9 @@ export const POST = handler(async (req) => {
   requireAdmin(access, supplier.team_id);
 
   const [product] = await sql`
-    insert into calc.products (team_id, supplier_id, category_id, name, unit, price_ore, attachment_url, updated_by)
+    insert into calc.products (team_id, supplier_id, category_id, name, unit, price_ore, attachment_url, specs, updated_by)
     select ${supplier.team_id}, ${input.supplierId}, c.id, ${input.name}, ${input.unit}, ${input.price},
-           ${input.attachmentUrl ?? null}, ${access.userId}
+           ${input.attachmentUrl ?? null}, ${asJson(input.specs ?? {})}, ${access.userId}
     from calc.categories c
     where c.id = ${input.categoryId} and c.team_id = ${supplier.team_id}
     returning id`;

@@ -13,6 +13,8 @@ export interface CalculationRow {
   customer_type: "private" | "business";
   draft_input: unknown;
   lock_version: number;
+  created_by: string;
+  updated_by: string | null;
   created_at: Date;
   updated_at: Date;
 }

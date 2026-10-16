@@ -31,6 +31,8 @@ export interface LineInput {
   fixedSale?: Decimal;
   /** Volumrabatt kan bare gjelde monteringslinjer. */
   reductionEligible?: boolean;
+  /** Kostnaden regnes med i grunnlaget for automatisk støtte (f.eks. Enova for solceller). */
+  supportEligible?: boolean;
   /** Referanser og visningsdata (produkt-ID, leverandør, kategori osv.). Følger med uendret. */
   meta?: Record<string, unknown>;
 }
@@ -52,8 +54,42 @@ export interface CalculationInput {
   reduction?: Adjustment;
   reductionTiers?: Tier[];
   vatPercent?: Decimal;
-  /** Anslått støtte i kroner. Vises separat og påvirker ikke fakturabeløpet. */
+  /** Eldre felt: manuelt støtteanslag i kroner. Brukes hvis `support` ikke er satt. */
   supportAmount?: Decimal;
+  /** Støtte vises separat og påvirker aldri fakturapris, mva. eller kommisjon. */
+  support?: SupportInput;
+}
+
+export type SupportInput =
+  | { mode: "none" }
+  | { mode: "manual"; amount: Decimal; provider?: string }
+  | {
+      /**
+       * Støtte = min(støtteberettiget kostnad inkl. mva. × prosent; min(kWp, maks kWp) × sats; maks beløp).
+       * Støtteberettiget kostnad = linjer med supportEligible, med sin andel av kommisjonen, inkl. mva.
+       */
+      mode: "auto";
+      provider?: string;
+      percent: Decimal;
+      /** Kroner per kWp */
+      perKwp: Decimal;
+      maxKwp: Decimal;
+      /** Kroner */
+      maxAmount: Decimal;
+      /** Faktisk installert effekt (paneler × Wp / 1000) */
+      kwp: Decimal;
+    };
+
+export interface SupportResult {
+  mode: SupportInput["mode"];
+  provider: string | null;
+  amount: Ore;
+  /** Bare for auto: */
+  eligibleBaseIncVat: Ore | null;
+  byPercent: Ore | null;
+  byKwp: Ore | null;
+  cap: Ore | null;
+  kwp: number | null;
 }
 
 export interface CalculatedLine
@@ -101,6 +137,7 @@ export interface CalculationResult {
     /** subtotal − supplierCost. Skal dekke arbeid, drift og fortjeneste. Ikke dekningsbidrag. */
     installerRemaining: Ore;
   };
+  support: SupportResult;
   warnings: Warning[];
   /** Om prisreglene tillater lagring. Ikke en teknisk godkjenning av anlegget. */
   ready: boolean;
