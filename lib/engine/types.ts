@@ -6,7 +6,11 @@ export type Ore = number;
 
 export type LineKind = "product" | "mount" | "work";
 export type PriceMode = "auto" | "fixed";
-export type AdjustmentMode = "auto" | "percent" | "amount";
+/**
+ * auto = trinn, percent = manuell prosent, amount = fast kronebeløp,
+ * total (bare kommisjon) = avtalt sluttsum eks. mva.; kommisjonen blir sluttsum − sum før Soleklart.
+ */
+export type AdjustmentMode = "auto" | "percent" | "amount" | "total";
 
 export interface Tier {
   min: number;

@@ -20,10 +20,17 @@ const schema = z
     supportMaxKwp: z.coerce.number().min(0).max(100000),
     supportMax: kroner,
     mountSupportEligible: z.boolean(),
+    defaultBatteryClass: z.enum(["HV", "LV"]),
+    hybridDcRatio: z.coerce.number().gt(0).max(5),
+    economyElPricePrivate: z.coerce.number().min(0).max(20),
+    economyNetPricePrivate: z.coerce.number().min(0).max(20),
+    economyElPriceBusiness: z.coerce.number().min(0).max(20),
+    economyNetPriceBusiness: z.coerce.number().min(0).max(20),
+    economyPriceGrowthPercent: z.coerce.number().min(-20).max(50),
   })
   .partial();
 
-/** Sentrale regler for teamet: provisjon, mva., invertervalg og støtte. Bare feltene som sendes, endres. */
+/** Sentrale regler for teamet: provisjon, mva., invertervalg, støtte, batteri og standardverdier for tilbud. Bare feltene som sendes, endres. */
 export const PUT = handler(async (req) => {
   const access = await requireAccess(req);
   const teamId = adminTeamId(access);
@@ -40,6 +47,13 @@ export const PUT = handler(async (req) => {
   if (input.supportMaxKwp !== undefined) columns.support_max_kwp = input.supportMaxKwp;
   if (input.supportMax !== undefined) columns.support_max_ore = input.supportMax;
   if (input.mountSupportEligible !== undefined) columns.mount_support_eligible = input.mountSupportEligible;
+  if (input.defaultBatteryClass !== undefined) columns.default_battery_class = input.defaultBatteryClass;
+  if (input.hybridDcRatio !== undefined) columns.hybrid_dc_ratio = input.hybridDcRatio;
+  if (input.economyElPricePrivate !== undefined) columns.economy_el_price_private = input.economyElPricePrivate;
+  if (input.economyNetPricePrivate !== undefined) columns.economy_net_price_private = input.economyNetPricePrivate;
+  if (input.economyElPriceBusiness !== undefined) columns.economy_el_price_business = input.economyElPriceBusiness;
+  if (input.economyNetPriceBusiness !== undefined) columns.economy_net_price_business = input.economyNetPriceBusiness;
+  if (input.economyPriceGrowthPercent !== undefined) columns.economy_price_growth_percent = input.economyPriceGrowthPercent;
 
   const sorted = input.commissionTiers ? validateTiers(input.commissionTiers, "commissionTiers") : null;
   if (sorted?.some((t) => t.min < 1)) throw new HttpError(400, "Provisjonstrinn starter på minst 1 panel", "BAD_REQUEST");

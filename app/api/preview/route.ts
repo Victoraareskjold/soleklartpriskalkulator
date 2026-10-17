@@ -1,6 +1,5 @@
 import { z } from "zod";
-import { calculate } from "@/lib/engine";
-import { buildEngineInput } from "@/lib/quote/build";
+import { evaluateDraft } from "@/lib/quote/evaluate";
 import { draftSchema } from "@/lib/quote/draft";
 import { requireAccess, requireInstallerAccess } from "@/lib/server/auth";
 import { body, handler, preflight } from "@/lib/server/http";
@@ -16,6 +15,6 @@ export const POST = handler(async (req) => {
   const access = await requireAccess(req);
   const input = await body(req, z.object({ installerGroupId: uuid, draft: draftSchema }));
   const installer = await requireInstallerAccess(access, input.installerGroupId);
-  const built = await buildEngineInput(input.draft, installer);
-  return { kwp: built.kwp, result: calculate(built.input) };
+  const e = await evaluateDraft(input.draft, installer);
+  return { kwp: e.built.kwp, result: e.result, batteryOffer: e.batteryOffer, economy: e.economy };
 });

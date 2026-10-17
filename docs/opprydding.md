@@ -7,30 +7,30 @@ Ta backup (eksport) av hver tabell før den droppes. Basert på eksport 14.10.20
 
 Brukes bare av dagens priskalkulator/pristabell i dashboardet.
 
-| Tabell | Rader | Erstattes av |
-|---|---|---|
-| `suppliers` | 6 | `calc.suppliers` |
-| `product_categories` | 8 | `calc.categories` |
-| `product_subcategories` | 11 | `calc.categories` (underkategori) |
-| `products` | 149 | `calc.products` + `calc.supplier_price_versions` |
-| `supplier_categories` | 49 | påslag per kategori i `calc.price_book_entries` |
-| `mount_items` | 122 | monteringspris per installatør/produkt/taktype i prisbok |
-| `mount_volume_reduction` | 32 | `calc.volume_tiers` |
-| `electrical_installation_categories` | 4 | `calc.work_types` |
-| `electrical_installation_items` | 132 | `calc.work_types` + satser i prisbok |
-| `team_commission` | 4 | `calc.commission_policies` / `commission_tiers` |
-| `work_items` | 0 | død, ingen kode bruker den |
+| Tabell                               | Rader | Erstattes av                                             |
+| ------------------------------------ | ----- | -------------------------------------------------------- |
+| `suppliers`                          | 6     | `calc.suppliers`                                         |
+| `product_categories`                 | 8     | `calc.categories`                                        |
+| `product_subcategories`              | 11    | `calc.categories` (underkategori)                        |
+| `products`                           | 149   | `calc.products` + `calc.supplier_price_versions`         |
+| `supplier_categories`                | 49    | påslag per kategori i `calc.price_book_entries`          |
+| `mount_items`                        | 122   | monteringspris per installatør/produkt/taktype i prisbok |
+| `mount_volume_reduction`             | 32    | `calc.volume_tiers`                                      |
+| `electrical_installation_categories` | 4     | `calc.work_types`                                        |
+| `electrical_installation_items`      | 132   | `calc.work_types` + satser i prisbok                     |
+| `team_commission`                    | 4     | `calc.commission_policies` / `commission_tiers`          |
+| `work_items`                         | 0     | død, ingen kode bruker den                               |
 
 ## 2. Brukes av pvmap. Kan IKKE droppes uten videre
 
 pvmap (solkartet) har sitt eget grove prisestimat til kunden og leser:
 
-| Tabell / felt | Brukt i pvmap |
-|---|---|
-| `solarpanels` (2 rader) | `api/panel-types` → panelvalg i kartet |
-| `commissions` (1 rad) | `api/commission`, `api/pricing-data` |
-| `installer_groups.FORMEL`, `"0-72"` … `"1000+"` | `api/pricing-data` |
-| `roof_types.PRIS` | `api/roof-types` |
+| Tabell / felt                                   | Brukt i pvmap                                                                                      |
+| ----------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `solarpanels` (2 rader)                         | `api/panel-types` → panelvalg i kartet. Redigeres nå fra dashboardet via `/api/map-panels` (17.10) |
+| `commissions` (1 rad)                           | `api/commission`, `api/pricing-data`                                                               |
+| `installer_groups.FORMEL`, `"0-72"` … `"1000+"` | `api/pricing-data`                                                                                 |
+| `roof_types.PRIS`                               | `api/roof-types`                                                                                   |
 
 Disse kan først fjernes hvis pvmap-estimatet også flyttes til ny tjeneste (avklares med Asbjørn). Til da blir de stående.
 
@@ -53,3 +53,9 @@ Disse kan først fjernes hvis pvmap-estimatet også flyttes til ny tjeneste (avk
 
 - `NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY` finnes i soleklartdashboard og pvmap (`utils/supabase/client.*`). Gi nytt navn `SUPABASE_SERVICE_ROLE_KEY`, bruk kun server-side, og roter nøkkelen i Supabase.
 - Rettet i soleklart-kalkulator sin `.env` 14.10.
+
+## 6. Overflødig etter runden 17.10
+
+- `soleklartdashboard/app/components/leads/batterySetup.ts` brukes ikke lenger (batterioppsettet regnes i tjenesten). Kan slettes.
+- localStorage-nøklene `soleklart.batterySetup` og `soleklart.batterySetup.<installatør>` i nettleserne brukes ikke lenger.
+- pvwebsites `config/battery.js`: priser for batteri/hybrid overstyres av `price_data.batterySection` på nye tilbud. Nødstrøm-prisene der er fortsatt eksempeltall.

@@ -30,7 +30,7 @@ export interface LineMeta {
 export interface BuiltInput {
   input: CalculationInput;
   /** Satsene som ble brukt, for sporbarhet */
-  rules: { commissionTiers: unknown; volumeTiers: unknown; settings: unknown };
+  rules: { commissionTiers: unknown; volumeTiers: unknown; settings: Settings };
   /** Faktisk installert effekt fra panellinjene (paneler × Wp / 1000) */
   kwp: number;
 }

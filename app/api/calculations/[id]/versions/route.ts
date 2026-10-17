@@ -1,8 +1,6 @@
 import { z } from "zod";
-import { calculate } from "@/lib/engine";
-import { buildEngineInput } from "@/lib/quote/build";
 import { draftSchema } from "@/lib/quote/draft";
-import { toLegacyPriceData } from "@/lib/quote/legacy";
+import { evaluateDraft, priceDataFor, versionInput } from "@/lib/quote/evaluate";
 import { loadCalculation } from "@/lib/quote/access";
 import { requireAccess } from "@/lib/server/auth";
 import { asJson, sql } from "@/lib/server/db";
@@ -36,8 +34,8 @@ export const POST = handler<{ id: string }>(async (req, { id }) => {
   }
 
   const input = await body(req, schema);
-  const built = await buildEngineInput(input.draft, installer);
-  const result = calculate(built.input);
+  const evaluated = await evaluateDraft(input.draft, installer);
+  const { result } = evaluated;
   if (!result.ready) {
     throw new HttpError(422, result.warnings.find((w) => w.blocking)?.message ?? "Kalkylen kan ikke lagres", "NOT_READY");
   }
@@ -70,7 +68,7 @@ export const POST = handler<{ id: string }>(async (req, { id }) => {
         total_ex_vat_ore, total_inc_vat_ore, idempotency_key, created_by)
       values (
         ${id}, ${version}, ${previous?.id ?? null}, ${calc.estimate_id}, ${result.engineVersion},
-        ${asJson({ ...built.input, rules: built.rules })}, ${asJson(result)},
+        ${asJson(versionInput(evaluated))}, ${asJson(result)},
         ${result.totals.totalExVat}, ${result.totals.totalIncVat}, ${idempotencyKey}, ${access.userId})
       returning id`;
 
@@ -81,11 +79,12 @@ export const POST = handler<{ id: string }>(async (req, { id }) => {
       where id = ${id}
       returning lock_version`;
 
-    // batterySection hører til tilbudssiden (settes av dashboardet), ikke til kalkylen: behold den.
-    const priceData = {
-      ...toLegacyPriceData(result, { quoteVersionId: saved.id, simulationPdfUrl }),
-      ...(batterySection ? { batterySection } : {}),
-    };
+    // Batteritillegget regnes nå i kalkylen. Eldre utkast uten batteroppsett beholder estimatets batterySection.
+    const priceData = priceDataFor(result, versionInput(evaluated), {
+      quoteVersionId: saved.id,
+      simulationPdfUrl,
+      keepBatterySection: batterySection,
+    });
     if (calc.estimate_id) {
       await tx`
         update public.estimates
@@ -100,6 +99,7 @@ export const POST = handler<{ id: string }>(async (req, { id }) => {
       estimateId: calc.estimate_id,
       totals: result.totals,
       priceData,
+      batteryOffer: evaluated.batteryOffer,
     };
   });
 });

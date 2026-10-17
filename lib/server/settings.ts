@@ -13,6 +13,16 @@ export interface Settings {
   supportMaxKwp: number;
   supportMaxOre: number;
   mountSupportEligible: boolean;
+  /** Standard batteritype på batterisiden av tilbudet */
+  defaultBatteryClass: "HV" | "LV";
+  /** Hvor mange kWp PV en hybridinverter tåler per kW AC, når maks PV ikke er oppgitt på produktet */
+  hybridDcRatio: number;
+  /** Standardverdier for økonomien i nye tilbud (kr/kWh og prosent) */
+  economy: {
+    private: { elPrice: number; netPrice: number };
+    business: { elPrice: number; netPrice: number };
+    priceGrowthPercent: number;
+  };
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -26,10 +36,21 @@ export const DEFAULT_SETTINGS: Settings = {
   supportMaxKwp: 15,
   supportMaxOre: 3750000,
   mountSupportEligible: true,
+  defaultBatteryClass: "HV",
+  hybridDcRatio: 1.5,
+  economy: { private: { elPrice: 0.56, netPrice: 0.62 }, business: { elPrice: 0.56, netPrice: 0.62 }, priceGrowthPercent: 2.5 },
+};
+
+type SettingsRow = Omit<Settings, "economy"> & {
+  elPrivate: number;
+  netPrivate: number;
+  elBusiness: number;
+  netBusiness: number;
+  growth: number;
 };
 
 export async function loadSettings(teamId: string): Promise<Settings> {
-  const [row] = await sql<Settings[]>`
+  const [row] = await sql<SettingsRow[]>`
     select no_panel_commission_percent::float8 as "noPanelCommissionPercent",
            vat_percent::float8 as "vatPercent",
            inverter_sizing_factor::float8 as "inverterSizingFactor",
@@ -39,7 +60,23 @@ export async function loadSettings(teamId: string): Promise<Settings> {
            support_per_kwp_ore::int as "supportPerKwpOre",
            support_max_kwp::float8 as "supportMaxKwp",
            support_max_ore::int as "supportMaxOre",
-           mount_support_eligible as "mountSupportEligible"
+           mount_support_eligible as "mountSupportEligible",
+           default_battery_class as "defaultBatteryClass",
+           hybrid_dc_ratio::float8 as "hybridDcRatio",
+           economy_el_price_private::float8 as "elPrivate",
+           economy_net_price_private::float8 as "netPrivate",
+           economy_el_price_business::float8 as "elBusiness",
+           economy_net_price_business::float8 as "netBusiness",
+           economy_price_growth_percent::float8 as "growth"
     from calc.settings where team_id = ${teamId}`;
-  return row ?? DEFAULT_SETTINGS;
+  if (!row) return DEFAULT_SETTINGS;
+  const { elPrivate, netPrivate, elBusiness, netBusiness, growth, ...rest } = row;
+  return {
+    ...rest,
+    economy: {
+      private: { elPrice: elPrivate, netPrice: netPrivate },
+      business: { elPrice: elBusiness, netPrice: netBusiness },
+      priceGrowthPercent: growth,
+    },
+  };
 }

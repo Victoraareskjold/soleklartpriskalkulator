@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { assertLeadAndEstimate, loadCalculation } from "@/lib/quote/access";
-import { toLegacyPriceData } from "@/lib/quote/legacy";
+import { priceDataFor } from "@/lib/quote/evaluate";
 import type { CalculationResult } from "@/lib/engine";
 import { requireAccess } from "@/lib/server/auth";
 import { asJson, sql } from "@/lib/server/db";
@@ -23,8 +23,8 @@ export const POST = handler<{ id: string }>(async (req, { id }) => {
   await assertLeadAndEstimate(calculation.installer_group_id, calculation.lead_id, input.estimateId);
 
   return sql.begin(async (tx) => {
-    const [version] = await tx<{ id: string; result: CalculationResult }[]>`
-      select id, result from calc.quote_versions where id = ${input.quoteVersionId} and calculation_id = ${id}`;
+    const [version] = await tx<{ id: string; result: CalculationResult; input: Parameters<typeof priceDataFor>[1] }[]>`
+      select id, result, input from calc.quote_versions where id = ${input.quoteVersionId} and calculation_id = ${id}`;
     if (!version) throw new HttpError(404, "Fant ikke versjonen", "NOT_FOUND");
 
     const [estimate] = await tx<{ signed_at: Date | null; simulation_pdf_url: string | null; battery_section: unknown }[]>`
@@ -32,12 +32,13 @@ export const POST = handler<{ id: string }>(async (req, { id }) => {
       from public.estimates where id = ${input.estimateId} for update`;
     if (estimate.signed_at) throw new HttpError(409, "Estimatet er signert og kan ikke endres", "SIGNED");
 
-    // batterySection (batterioppsettet for tilbudssiden) settes av dashboardet og er ikke en del av
-    // kalkylen. Den må følge med, ellers forsvinner den når price_data skrives på nytt her.
-    const priceData = {
-      ...toLegacyPriceData(version.result, { quoteVersionId: version.id, simulationPdfUrl: estimate.simulation_pdf_url }),
-      ...(estimate.battery_section ? { batterySection: estimate.battery_section } : {}),
-    };
+    // Batteritillegg og standardverdier kommer fra den låste versjonen. Eldre versjoner uten dem
+    // beholder estimatets egen batterySection.
+    const priceData = priceDataFor(version.result, version.input, {
+      quoteVersionId: version.id,
+      simulationPdfUrl: estimate.simulation_pdf_url,
+      keepBatterySection: estimate.battery_section,
+    });
     await tx`
       update public.estimates
       set price_data = ${asJson(priceData)}, quote_version_id = ${version.id}, updated_at = now()

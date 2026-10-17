@@ -142,6 +142,16 @@ function resolveCommission(input: CalculationInput, subtotal: Ore) {
     }
   } else if (commission.mode === "percent") {
     percent = nonNegative(commission.value, "commission.value");
+  } else if (commission.mode === "total") {
+    // Avtalt sluttsum eks. mva.: Soleklart-kommisjonen tar differansen
+    nonNegative(commission.value, "commission.value");
+    amount = toOre(commission.value!, "commission.value") - subtotal;
+    if (amount < 0) {
+      throw new CalculationError(
+        "Avtalt pris er lavere enn summen før Soleklart. Reduser linjene eller velg en høyere pris.",
+        "commission.value",
+      );
+    }
   } else if (commission.mode === "amount") {
     nonNegative(commission.value, "commission.value");
     amount = toOre(commission.value!, "commission.value");

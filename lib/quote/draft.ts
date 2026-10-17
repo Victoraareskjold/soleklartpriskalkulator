@@ -1,5 +1,6 @@
 // Kalkyle-utkastet slik dashboardet sender det. Tall er tekst slik brukeren skrev dem.
 import { z } from "zod";
+import { batteryOfferSchema } from "./battery";
 
 const text = z.string().max(200);
 const decimalText = z.union([z.string().max(40), z.number()]).transform(String);
@@ -24,7 +25,8 @@ export const draftLineSchema = z.looseObject({
 });
 
 const adjustmentSchema = z.object({
-  mode: z.enum(["auto", "percent", "amount"]),
+  /** total = avtalt sluttsum eks. mva. (bare kommisjon) */
+  mode: z.enum(["auto", "percent", "amount", "total"]),
   value: decimalText.optional().default(""),
 });
 
@@ -48,6 +50,8 @@ export const draftSchema = z.looseObject({
   support: supportDraftSchema.optional(),
   grid: z.enum(["230", "400"]).optional().default("230"),
   battery: z.boolean().optional().default(false),
+  /** Batteri og hybrid som tillegg kunden kan velge i tilbudet */
+  batteryOffer: batteryOfferSchema.optional(),
 });
 
 export type Draft = z.infer<typeof draftSchema>;
