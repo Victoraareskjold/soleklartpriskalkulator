@@ -3,7 +3,8 @@ import { calculate, type LineInput } from "@/lib/engine";
 import { toLegacyPriceData } from "./legacy";
 
 const line = (id: string, kind: LineInput["kind"], quantity: number, baseUnit: number, markupPercent: number, meta: Record<string, unknown>, extra: Partial<LineInput> = {}): LineInput => ({
-  id, name: id, kind, quantity, baseUnit, markupPercent, meta: { source: "catalog", overridden: [], ...meta }, ...extra,
+  // Som i build.ts: linjens navn er produktnavnet, med mindre det er endret i tilbudet
+  id, name: (meta.productName as string | undefined) ?? id, kind, quantity, baseUnit, markupPercent, meta: { source: "catalog", overridden: [], ...meta }, ...extra,
 });
 
 describe("price_data i gammelt format", () => {
@@ -47,5 +48,17 @@ describe("price_data i gammelt format", () => {
     expect(Math.round((data.total - lines) * 100)).toBe(result.commission.amount);
     expect(data["total inkl. alt"]).toBe(result.totals.totalIncVat / 100);
     expect(data.quoteVersionId).toBe("v1");
+  });
+});
+
+describe("endret tekst på en linje", () => {
+  it("kundesiden viser teksten fra tilbudet, ikke katalognavnet", () => {
+    const result = calculate({
+      panelCount: 0,
+      commission: { mode: "percent", value: 0 },
+      reduction: { mode: "percent", value: 0 },
+      lines: [line("inv", "product", 1, 9000, 10, { category: "inverter", productName: "Deye 15kW" }, { name: "Deye 15kW (levert av STS)" })],
+    });
+    expect(toLegacyPriceData(result).suppliers[0].product).toBe("Deye 15kW (levert av STS)");
   });
 });

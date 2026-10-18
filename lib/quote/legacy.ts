@@ -46,7 +46,8 @@ export function toLegacyPriceData(
     id: line.id,
     name: line.name,
     supplier: meta.supplier ?? "",
-    product: line.kind === "mount" ? (meta.roofTypeName ?? line.name) : (meta.productName ?? line.name),
+    // Teksten på linjen (kan være endret i tilbudet); montering vises som taktype
+    product: line.kind === "mount" ? (meta.roofTypeName ?? line.name) : line.name,
     category: meta.category ?? fallbackCategory,
     quantity: line.quantity,
     priceWithMarkup: kr(line.sale),

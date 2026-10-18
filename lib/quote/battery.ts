@@ -28,12 +28,25 @@ const modelOverride = z.looseObject({
   modulesPerBms: z.number().int().min(1).max(100).optional(),
 });
 
+const hybridCustomSchema = z.object({
+  name: z.string().trim().min(1).max(200),
+  /** Innkjøpspris per stk (kr) */
+  price: z.union([z.string(), z.number()]),
+  quantity: z.number().int().min(1).max(50).optional(),
+});
+
 export const batteryOfferSchema = z.looseObject({
   /** Vis batteriseksjonen i tilbudet */
   enabled: z.boolean().optional().default(true),
   batteryClass: z.enum(["HV", "LV"]).optional(),
   /** Manuelt valgt hybridinverter. null/mangler = automatisk */
   hybridProductId: z.string().nullish(),
+  /** Egen hybridinverter som ikke ligger i katalogen (navn, innkjøp per stk, antall) */
+  hybridCustom: hybridCustomSchema.nullish(),
+  /** Antall hybridinvertere. Mangler = like mange som stringinvertere i grunnpakken */
+  hybridQuantity: z.number().int().min(1).max(50).nullish(),
+  /** Rekkefølgen batterimodellene vises i for kunden (produkt-ID-er). Mangler = standardoppsettet */
+  modelOrder: z.array(z.string()).max(100).nullish(),
   /** Påslag på batteri og hybrid i prosent. null/mangler = installatørens sats for solcellemateriell */
   markupPercent: z.union([z.string(), z.number()]).nullish(),
   installWorkTypeId: z.string().nullish(),
@@ -57,6 +70,22 @@ export interface OfferProduct {
   active: boolean;
   productKind: string;
   supplier: string;
+  supplierId?: string;
+}
+
+/** Foretrukne leverandører og merker. Tomme lister = ingen preferanse. */
+export interface Preference {
+  supplierIds?: string[];
+  brands?: string[];
+}
+
+export function isPreferred(p: { name: string; supplierId?: string }, pref?: Preference | null) {
+  const suppliers = pref?.supplierIds ?? [];
+  const brands = (pref?.brands ?? []).map((b) => b.trim().toLowerCase()).filter(Boolean);
+  if (!suppliers.length && !brands.length) return false;
+  const supplierOk = !suppliers.length || (!!p.supplierId && suppliers.includes(p.supplierId));
+  const brandOk = !brands.length || brands.some((b) => p.name.toLowerCase().includes(b));
+  return supplierOk && brandOk;
 }
 
 export interface OfferWork {
@@ -70,7 +99,15 @@ export interface OfferContext {
   products: OfferProduct[];
   batteryWork: OfferWork[];
   markups: Record<string, number>;
-  settings: { defaultBatteryClass: "HV" | "LV"; hybridDcRatio: number; noPanelCommissionPercent: number };
+  settings: {
+    defaultBatteryClass: "HV" | "LV";
+    hybridDcRatio: number;
+    noPanelCommissionPercent: number;
+    /** Foretrukne hybridinvertere og batterier */
+    preferences?: { hybrid?: Preference; battery?: Preference };
+    /** Standard batteriutvalg og rekkefølge for nye tilbud */
+    batteryModels?: string[];
+  };
   grid: "230" | "400";
   kwp: number;
 }
@@ -95,12 +132,24 @@ export interface BatteryOfferResult {
   elektroMarkupPercent: number;
   /** Effektiv Soleklart-sats fra grunnkalkylen (kommisjon / sum før Soleklart) */
   commissionRate: number;
-  stringInverter: { productId: string | null; name: string; acKw: number | null; saleUnitOre: number; datasheetUrl: string | null } | null;
+  stringInverter: { productId: string | null; name: string; acKw: number | null; saleUnitOre: number; quantity: number; datasheetUrl: string | null } | null;
   hybridIncluded: boolean;
-  hybrid: (PriceSteps & { productId: string; name: string; acKw: number | null; batteryClass: string | null; datasheetUrl: string | null; auto: boolean }) | null;
+  hybrid:
+    | (PriceSteps & {
+        productId: string | null;
+        name: string;
+        acKw: number | null;
+        batteryClass: string | null;
+        datasheetUrl: string | null;
+        auto: boolean;
+        custom: boolean;
+        quantity: number;
+        preferred: boolean;
+      })
+    | null;
   /** Mellomlegg for å bytte til hybrid */
   upgrade: { saleOre: number; customerOre: number };
-  hybridCandidates: { productId: string; name: string; acKw: number | null; supplier: string; purchaseOre: number; fits: boolean }[];
+  hybridCandidates: { productId: string; name: string; acKw: number | null; supplier: string; purchaseOre: number; fits: boolean; preferred: boolean }[];
   install: (PriceSteps & { workTypeId: string | null; name: string }) | null;
   models: {
     productId: string;
@@ -116,6 +165,7 @@ export interface BatteryOfferResult {
     modulePriceOverridden: boolean;
     bms: (PriceSteps & { productId: string | null; name: string; overridden: boolean }) | null;
     datasheetUrl: string | null;
+    preferred: boolean;
   }[];
   recommended: { model: string; modules: number } | null;
   warnings: string[];
@@ -147,27 +197,32 @@ export function planBatteryOffer(draft: BatteryOfferDraft | undefined, ctx: Offe
     return { purchaseOre, saleOre, customerOre: customer(saleOre) };
   };
 
-  // Stringinverteren i grunnpakken
-  const inverterLine = result.lines.find((l) => l.productKind === "inverter");
+  // Stringinverteren(e) i grunnpakken (katalog eller egendefinert linje)
+  const inverterLines = result.lines.filter((l) => l.productKind === "inverter");
+  const inverterLine = inverterLines[0];
   const lineSourceId = (inverterLine?.meta as { sourceId?: string } | undefined)?.sourceId ?? null;
   const baseInverter = ctx.products.find((p) => p.id === lineSourceId) ?? null;
+  const stringQty = Math.max(1, inverterLines.reduce((sum, l) => sum + (Number(l.quantity) || 0), 0));
   const stringInverter = inverterLine
     ? {
         productId: baseInverter?.id ?? null,
-        name: baseInverter?.name ?? inverterLine.name,
+        name: inverterLines.length > 1 ? inverterLines.map((l) => l.name).join(" + ") : baseInverter?.name ?? inverterLine.name,
         acKw: num(baseInverter?.specs.acKw) || null,
-        saleUnitOre: Math.round(inverterLine.sale / (Number(inverterLine.quantity) || 1)),
+        saleUnitOre: Math.round(inverterLines.reduce((sum, l) => sum + l.sale, 0) / stringQty),
+        quantity: stringQty,
         datasheetUrl: baseInverter?.attachmentUrl ?? null,
       }
     : null;
   const hybridIncluded = baseInverter?.specs.hybrid === true;
 
-  // Hybridalternativ
+  // Hybridalternativ. Standard: like mange hybrider som stringinvertere, hver dimensjonert for sin andel av anlegget.
+  const hybridQty = hybridIncluded ? stringQty : (offer.hybridCustom?.quantity ?? offer.hybridQuantity ?? stringQty);
   const kwp = ctx.kwp;
+  const kwpPerHybrid = kwp / Math.max(1, hybridQty);
   const pvOk = (p: OfferProduct) => {
     const maxPv = num(p.specs.maxPvKwp);
-    if (Number.isFinite(maxPv)) return maxPv >= kwp;
-    return (num(p.specs.acKw) || 0) * ctx.settings.hybridDcRatio >= kwp;
+    if (Number.isFinite(maxPv)) return maxPv >= kwpPerHybrid;
+    return (num(p.specs.acKw) || 0) * ctx.settings.hybridDcRatio >= kwpPerHybrid;
   };
   const hybridFits = (p: OfferProduct) =>
     p.specs.hybrid === true &&
@@ -175,35 +230,72 @@ export function planBatteryOffer(draft: BatteryOfferDraft | undefined, ctx: Offe
     (!p.specs.batteryClass || p.specs.batteryClass === batteryClass) &&
     num(p.specs.acKw) > 0 &&
     pvOk(p);
+  const hybridPref = ctx.settings.preferences?.hybrid;
+  const preferred = (p: OfferProduct) => isPreferred(p, hybridPref);
   const hybrids = ctx.products.filter((p) => p.active && p.productKind === "inverter" && p.specs.hybrid === true);
   const hybridCandidates = hybrids
-    .map((p) => ({ productId: p.id, name: p.name, acKw: num(p.specs.acKw) || null, supplier: p.supplier, purchaseOre: p.priceOre, fits: hybridFits(p) }))
-    .sort((a, b) => Number(b.fits) - Number(a.fits) || a.purchaseOre - b.purchaseOre || (a.acKw ?? 0) - (b.acKw ?? 0));
+    .map((p) => ({
+      productId: p.id,
+      name: p.name,
+      acKw: num(p.specs.acKw) || null,
+      supplier: p.supplier,
+      purchaseOre: p.priceOre,
+      fits: hybridFits(p),
+      preferred: preferred(p),
+    }))
+    .sort((a, b) => Number(b.fits) - Number(a.fits) || Number(b.preferred) - Number(a.preferred) || a.purchaseOre - b.purchaseOre || (a.acKw ?? 0) - (b.acKw ?? 0));
 
   let hybridProduct: OfferProduct | null = null;
   let hybridAuto = true;
+  const custom = offer.hybridCustom && !hybridIncluded ? offer.hybridCustom : null;
+  const customPrice = custom ? num(custom.price) : NaN;
+  if (custom && !(customPrice >= 0)) warnings.push("Egen hybridinverter mangler gyldig pris.");
   if (hybridIncluded && baseInverter) {
     hybridProduct = baseInverter;
+  } else if (custom && customPrice >= 0) {
+    hybridProduct = {
+      id: "",
+      name: custom.name,
+      priceOre: Math.round(customPrice * 100),
+      specs: {},
+      attachmentUrl: null,
+      active: true,
+      productKind: "inverter",
+      supplier: "Egendefinert",
+    };
+    hybridAuto = false;
   } else if (offer.hybridProductId) {
     hybridProduct = ctx.products.find((p) => p.id === offer.hybridProductId) ?? null;
     hybridAuto = false;
     if (!hybridProduct) warnings.push("Valgt hybridinverter finnes ikke lenger i katalogen. Velger automatisk.");
-    else if (!hybridFits(hybridProduct)) warnings.push(`${hybridProduct.name} passer ikke ${ctx.grid} V / ${batteryClass} / ${kwp.toLocaleString("nb-NO")} kWp.`);
+    else if (!hybridFits(hybridProduct)) warnings.push(`${hybridProduct.name} passer ikke ${ctx.grid} V / ${batteryClass} / ${kwpPerHybrid.toLocaleString("nb-NO", { maximumFractionDigits: 2 })} kWp per inverter.`);
   }
   if (!hybridProduct) {
     hybridAuto = true;
-    const fitting = hybrids.filter(hybridFits).sort((a, b) => a.priceOre - b.priceOre || (num(a.specs.acKw) || 0) - (num(b.specs.acKw) || 0));
     const stringAc = stringInverter?.acKw ?? Infinity;
-    // Helst ikke større enn stringinverteren (lavere AC er greit når PV-siden tåler anlegget)
-    hybridProduct = fitting.find((p) => num(p.specs.acKw) <= stringAc) ?? fitting[0] ?? null;
+    // Foretrukne merker/leverandører først, så helst ikke større enn stringinverteren, så rimeligst
+    const fitting = hybrids
+      .filter(hybridFits)
+      .sort(
+        (a, b) =>
+          Number(preferred(b)) - Number(preferred(a)) ||
+          Number(num(b.specs.acKw) <= stringAc) - Number(num(a.specs.acKw) <= stringAc) ||
+          a.priceOre - b.priceOre ||
+          (num(a.specs.acKw) || 0) - (num(b.specs.acKw) || 0),
+      );
+    hybridProduct = fitting[0] ?? null;
     if (!hybridProduct && kwp > 0) {
-      warnings.push(`Fant ingen hybridinverter for ${ctx.grid} V og ${batteryClass}-batteri som tåler ${kwp.toLocaleString("nb-NO")} kWp. Velg manuelt eller legg inn produktdata.`);
+      warnings.push(
+        `Fant ingen hybridinverter for ${ctx.grid} V og ${batteryClass}-batteri som tåler ${kwpPerHybrid.toLocaleString("nb-NO", { maximumFractionDigits: 2 })} kWp${hybridQty > 1 ? ` per inverter (${hybridQty} stk.)` : ""}. Velg fra katalogen, legg inn en egen hybridinverter, eller endre antall.`,
+      );
     }
   }
 
   const hybridSteps = hybridProduct ? steps(hybridProduct.priceOre, materialMarkup) : null;
-  const upgradeSale = hybridIncluded || !hybridSteps ? 0 : Math.max(0, hybridSteps.saleOre - (stringInverter?.saleUnitOre ?? 0));
-  if (!hybridIncluded && hybridSteps && stringInverter && hybridSteps.saleOre < stringInverter.saleUnitOre) {
+  // Mellomlegg: hybridene (med påslag) − stringinverterne de erstatter, slik de står i grunnpakken
+  const replaced = Math.min(hybridQty, stringQty) * (stringInverter?.saleUnitOre ?? 0);
+  const upgradeSale = hybridIncluded || !hybridSteps ? 0 : Math.max(0, hybridQty * hybridSteps.saleOre - replaced);
+  if (!hybridIncluded && hybridSteps && stringInverter && hybridQty * hybridSteps.saleOre < replaced) {
     warnings.push("Hybridinverteren er rimeligere enn stringinverteren. Mellomlegget settes til 0 kr.");
   }
 
@@ -223,6 +315,12 @@ export function planBatteryOffer(draft: BatteryOfferDraft | undefined, ctx: Offe
   const batteries = ctx.products.filter((p) => p.productKind === "batteri" && p.active);
   const bmsList = batteries.filter(isBms);
   const overrides = new Map((offer.models ?? []).map((m) => [m.productId, m]));
+  const defaultModels = ctx.settings.batteryModels ?? [];
+  const order = offer.modelOrder?.length ? offer.modelOrder : defaultModels;
+  const rank = (id: string) => {
+    const i = order.indexOf(id);
+    return i < 0 ? 10_000 : i;
+  };
   const models = batteries
     .filter((p) => !isBms(p))
     .map((p) => {
@@ -247,8 +345,8 @@ export function planBatteryOffer(draft: BatteryOfferDraft | undefined, ctx: Offe
       return {
         productId: p.id,
         name: p.name,
-        // Standard: modeller med valgt batteritype er med
-        enabled: o?.enabled ?? (!cls || cls === batteryClass),
+        // Standard: lagret standardutvalg, ellers modeller med valgt batteritype
+        enabled: o?.enabled ?? (defaultModels.length ? defaultModels.includes(p.id) : !cls || cls === batteryClass),
         structure,
         moduleKwh,
         batteryClass: cls,
@@ -262,8 +360,10 @@ export function planBatteryOffer(draft: BatteryOfferDraft | undefined, ctx: Offe
             ? { productId: bmsProduct?.id ?? null, name: bmsProduct?.name ?? "BMS", overridden: Number.isFinite(bmsOverride), ...steps(bmsPurchase, materialMarkup) }
             : null,
         datasheetUrl: p.attachmentUrl,
+        preferred: isPreferred(p, ctx.settings.preferences?.battery),
       };
-    });
+    })
+    .sort((a, b) => rank(a.productId) - rank(b.productId) || Number(b.preferred) - Number(a.preferred) || a.name.localeCompare(b.name, "nb"));
 
   const enabledModels = models.filter((m) => m.enabled && m.moduleKwh > 0);
   const recModel = enabledModels.find((m) => m.productId === offer.recommendedModelId) ?? enabledModels[0];
@@ -277,13 +377,15 @@ export function planBatteryOffer(draft: BatteryOfferDraft | undefined, ctx: Offe
 
   const section = offer.enabled
     ? {
+        enabled: true,
         pricesIncludeCommission: true,
-        hybridQty: 1,
-        hybridUnitEx: kr(customer(upgradeSale)),
+        hybridQty,
+        hybridUnitEx: kr(customer(upgradeSale) / Math.max(1, hybridQty)),
         hybridIncluded,
         hybrid: hybridProduct
           ? { name: hybridProduct.name, acKw: num(hybridProduct.specs.acKw) || null, datasheetUrl: hybridProduct.attachmentUrl }
           : null,
+        order: enabledModels.map((m) => m.productId),
         stringInverter: stringInverter ? { name: stringInverter.name, datasheetUrl: stringInverter.datasheetUrl } : null,
         batteryInstallEx: install ? kr(install.customerOre) : 0,
         recommended,
@@ -309,7 +411,8 @@ export function planBatteryOffer(draft: BatteryOfferDraft | undefined, ctx: Offe
           ]),
         ),
       }
-    : null;
+    : // Slått av: kunden ser verken hybridoppgradering eller batteri
+      { enabled: false };
 
   return {
     enabled: offer.enabled,
@@ -322,8 +425,11 @@ export function planBatteryOffer(draft: BatteryOfferDraft | undefined, ctx: Offe
     hybridIncluded,
     hybrid: hybridProduct && hybridSteps
       ? {
-          productId: hybridProduct.id,
+          productId: hybridProduct.id || null,
           name: hybridProduct.name,
+          custom: Boolean(custom) && !hybridIncluded && hybridProduct.id === "",
+          quantity: hybridQty,
+          preferred: hybridProduct.id ? preferred(hybridProduct) : false,
           acKw: num(hybridProduct.specs.acKw) || null,
           batteryClass: (hybridProduct.specs.batteryClass as string | undefined) ?? null,
           datasheetUrl: hybridProduct.attachmentUrl,

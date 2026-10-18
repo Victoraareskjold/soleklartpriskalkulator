@@ -44,9 +44,9 @@ export function signedBreakdown(base: CalculationResult, offer: BatteryOfferResu
   if (offer && mode !== "solar" && !offer.hybridIncluded && offer.hybrid) {
     lines.push({
       label: `Oppgradering til hybridinverter: ${offer.hybrid.name} (erstatter ${offer.stringInverter?.name ?? "stringinverter"})`,
-      quantity: 1,
-      purchaseOre: offer.hybrid.purchaseOre,
-      installerMarkupOre: offer.hybrid.saleOre - offer.hybrid.purchaseOre,
+      quantity: offer.hybrid.quantity ?? 1,
+      purchaseOre: offer.hybrid.purchaseOre * (offer.hybrid.quantity ?? 1),
+      installerMarkupOre: (offer.hybrid.saleOre - offer.hybrid.purchaseOre) * (offer.hybrid.quantity ?? 1),
       // Mellomlegget: hybrid med påslag minus stringinverteren slik den står i grunnpakken
       saleOre: offer.upgrade.saleOre,
       soleklartOre: offer.upgrade.customerOre - offer.upgrade.saleOre,

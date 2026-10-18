@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { validateTiers } from "@/lib/engine";
 import { adminTeamId, requireAccess } from "@/lib/server/auth";
-import { sql } from "@/lib/server/db";
+import { asJson, sql } from "@/lib/server/db";
 import { body, handler, HttpError, preflight } from "@/lib/server/http";
 import { kroner, percent, tiers } from "@/lib/server/schemas";
 
@@ -27,6 +27,13 @@ const schema = z
     economyElPriceBusiness: z.coerce.number().min(0).max(20),
     economyNetPriceBusiness: z.coerce.number().min(0).max(20),
     economyPriceGrowthPercent: z.coerce.number().min(-20).max(50),
+    /** Foretrukne leverandører og merker per type */
+    preferences: z.record(
+      z.enum(["inverter", "hybrid", "panel", "battery"]),
+      z.object({ supplierIds: z.array(z.uuid()).max(50).default([]), brands: z.array(z.string().trim().min(1).max(60)).max(20).default([]) }),
+    ),
+    /** Standard for batteridelen av nye tilbud */
+    batteryDefaults: z.object({ offerEnabled: z.boolean().optional(), models: z.array(z.uuid()).max(100).optional() }),
   })
   .partial();
 
@@ -54,6 +61,8 @@ export const PUT = handler(async (req) => {
   if (input.economyElPriceBusiness !== undefined) columns.economy_el_price_business = input.economyElPriceBusiness;
   if (input.economyNetPriceBusiness !== undefined) columns.economy_net_price_business = input.economyNetPriceBusiness;
   if (input.economyPriceGrowthPercent !== undefined) columns.economy_price_growth_percent = input.economyPriceGrowthPercent;
+  if (input.preferences !== undefined) columns.preferences = asJson(input.preferences);
+  if (input.batteryDefaults !== undefined) columns.battery_defaults = asJson(input.batteryDefaults);
 
   const sorted = input.commissionTiers ? validateTiers(input.commissionTiers, "commissionTiers") : null;
   if (sorted?.some((t) => t.min < 1)) throw new HttpError(400, "Provisjonstrinn starter på minst 1 panel", "BAD_REQUEST");

@@ -1,6 +1,22 @@
 import "server-only";
 import { sql } from "./db";
 
+/** Foretrukne leverandører (ID) og merker (ord i produktnavnet). Tomme lister = ingen preferanse. */
+export interface Preference {
+  supplierIds?: string[];
+  brands?: string[];
+}
+export type PreferenceKind = "inverter" | "hybrid" | "panel" | "battery";
+export type Preferences = Partial<Record<PreferenceKind, Preference>>;
+
+/** Standard for batteridelen av nye tilbud */
+export interface BatteryDefaults {
+  /** Vis hybrid/batteri for kunden som standard */
+  offerEnabled?: boolean;
+  /** Batterimodeller kunden ser, i rekkefølge (produkt-ID-er). Tom = alle med valgt batteritype */
+  models?: string[];
+}
+
 /** Sentrale beregningsregler for teamet. Beløp i øre. */
 export interface Settings {
   noPanelCommissionPercent: number;
@@ -23,6 +39,8 @@ export interface Settings {
     business: { elPrice: number; netPrice: number };
     priceGrowthPercent: number;
   };
+  preferences: Preferences;
+  batteryDefaults: BatteryDefaults;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -39,6 +57,8 @@ export const DEFAULT_SETTINGS: Settings = {
   defaultBatteryClass: "HV",
   hybridDcRatio: 1.5,
   economy: { private: { elPrice: 0.56, netPrice: 0.62 }, business: { elPrice: 0.56, netPrice: 0.62 }, priceGrowthPercent: 2.5 },
+  preferences: {},
+  batteryDefaults: {},
 };
 
 type SettingsRow = Omit<Settings, "economy"> & {
@@ -67,7 +87,9 @@ export async function loadSettings(teamId: string): Promise<Settings> {
            economy_net_price_private::float8 as "netPrivate",
            economy_el_price_business::float8 as "elBusiness",
            economy_net_price_business::float8 as "netBusiness",
-           economy_price_growth_percent::float8 as "growth"
+           economy_price_growth_percent::float8 as "growth",
+           preferences,
+           battery_defaults as "batteryDefaults"
     from calc.settings where team_id = ${teamId}`;
   if (!row) return DEFAULT_SETTINGS;
   const { elPrivate, netPrivate, elBusiness, netBusiness, growth, ...rest } = row;

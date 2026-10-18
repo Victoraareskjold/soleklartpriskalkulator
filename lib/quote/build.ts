@@ -8,6 +8,9 @@ import { HttpError } from "@/lib/server/http";
 import { loadSettings, type Settings } from "@/lib/server/settings";
 import type { Draft, DraftLine } from "./draft";
 
+/** Typer en egendefinert materiellinje kan ha → kategori i price_data */
+const CUSTOM_KINDS: Record<string, string> = { inverter: "inverter", batteri: "batteri", feste: "feste", annet: "annet" };
+
 const kr = (ore: number | null) => (ore == null ? null : String(ore / 100));
 const same = (a: string, b: string | null) => b !== null && Number(a.replace(",", ".")) === Number(b);
 
@@ -113,6 +116,17 @@ export async function buildEngineInput(draft: Draft, installer: { id: string; te
       Object.assign(meta, { category: "elektrisk installasjon", workGroup: w.grp, productName: w.name });
     }
 
+    // Egendefinert materiell kan merkes som inverter/batteri/feste (f.eks. en Deye 120 kW fra eget
+    // leverandørtilbud), så inverterreglene og tilbudssiden behandler den riktig. Aldri panel:
+    // kWp og støtte skal bare komme fra paneler i katalogen.
+    if (!line.sourceId && line.kind === "product") {
+      const custom = (line as { productKind?: unknown }).productKind;
+      if (typeof custom === "string" && CUSTOM_KINDS[custom]) {
+        productKind = custom;
+        meta.category = CUSTOM_KINDS[custom];
+      }
+    }
+
     if (line.sourceId) {
       meta.catalogBaseUnit = catalogBase;
       meta.catalogMarkupPercent = catalogMarkup;
@@ -127,7 +141,7 @@ export async function buildEngineInput(draft: Draft, installer: { id: string; te
       id: line.id,
       name: line.name.trim() || meta.productName || "Uten navn",
       kind: line.kind,
-      productKind, // kun fra katalogen – egendefinerte poster teller aldri som paneler
+      productKind, // katalogen, eller valgt type på egendefinert materiell (aldri panel)
       quantity: line.quantity,
       unit: line.unit,
       baseUnit: line.baseUnit,

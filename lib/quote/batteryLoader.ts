@@ -16,7 +16,7 @@ export async function computeBatteryOffer(
   const [products, batteryWork, markups] = await Promise.all([
     sql<OfferProduct[]>`
       select p.id, p.name, p.price_ore::int as "priceOre", p.specs, p.attachment_url as "attachmentUrl", p.active,
-             c.product_kind as "productKind", s.name as supplier
+             c.product_kind as "productKind", s.name as supplier, s.id as "supplierId"
       from calc.products p
       join calc.categories c on c.id = p.category_id
       join calc.suppliers s on s.id = p.supplier_id
@@ -38,6 +38,8 @@ export async function computeBatteryOffer(
       defaultBatteryClass: settings.defaultBatteryClass,
       hybridDcRatio: settings.hybridDcRatio,
       noPanelCommissionPercent: settings.noPanelCommissionPercent,
+      preferences: { hybrid: settings.preferences.hybrid, battery: settings.preferences.battery },
+      batteryModels: settings.batteryDefaults.models ?? [],
     },
     grid,
     kwp,

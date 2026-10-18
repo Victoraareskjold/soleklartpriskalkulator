@@ -136,3 +136,59 @@ describe("signert tilbud", () => {
     expect(b.commissionOre).toBe(base.commission.amount);
   });
 });
+
+describe("runde 18.10: manuell hybrid, flere invertere, preferanser og batteristandard", () => {
+  const twoInverters = () =>
+    calculate({
+      panelCount: 0,
+      reduction: { mode: "percent", value: 0 },
+      commission: { mode: "percent", value: 24 },
+      lines: [
+        { id: "inv", name: "Deye 15kW", kind: "product", productKind: "inverter", quantity: 2, baseUnit: 9000, markupPercent: 10, meta: { sourceId: "deye15" } },
+        { id: "rest", name: "Resten", kind: "product", quantity: 1, baseUnit: 90_000, markupPercent: 0 },
+      ],
+    });
+
+  it("egen hybridinverter: navn, innkjøp per stk og antall; mellomlegg mot stringinverterne den erstatter", () => {
+    const o = planBatteryOffer({ hybridCustom: { name: "Deye 120 kW hybrid", price: "60000", quantity: 1 } }, ctx({ kwp: 120 }), result());
+    expect(o.hybrid?.custom).toBe(true);
+    expect(o.hybrid?.productId).toBeNull();
+    expect(o.hybrid?.name).toBe("Deye 120 kW hybrid");
+    // 60 000 × 1,10 = 66 000 − 9 900 = 56 100 før Soleklart
+    expect(o.upgrade.saleOre).toBe(5_610_000);
+    expect(o.section?.hybridQty).toBe(1);
+  });
+
+  it("to stringinvertere: to hybrider som standard, dimensjonert for halve anlegget hver", () => {
+    // 30 kWp / 2 = 15 kWp per hybrid → 11,5 kW × 1,5 = 17,25 holder
+    const o = planBatteryOffer({}, ctx({ kwp: 30 }), twoInverters());
+    expect(o.stringInverter?.quantity).toBe(2);
+    expect(o.hybrid?.quantity).toBe(2);
+    expect(o.hybrid?.productId).toBe("sunsynk115");
+    // 2 × 25 300 − 2 × 9 900 = 30 800
+    expect(o.upgrade.saleOre).toBe(3_080_000);
+    expect(o.section?.hybridUnitEx).toBe(Math.round((3_080_000 * 1.24) / 2 / 100));
+  });
+
+  it("foretrukket merke/leverandør velges først når den passer", () => {
+    const o = planBatteryOffer({}, ctx({ settings: { ...ctx().settings, preferences: { hybrid: { brands: ["14,5kW"] } } } }), result());
+    expect(o.hybrid?.productId).toBe("sunsynk145");
+    expect(o.hybrid?.preferred).toBe(true);
+  });
+
+  it("standard batteriutvalg og rekkefølge, og rekkefølge per tilbud", () => {
+    const settings = { ...ctx().settings, batteryModels: ["fel10", "enermod"] };
+    const o = planBatteryOffer({}, ctx({ settings }), result());
+    expect(o.models.map((m) => m.productId)).toEqual(["fel10", "enermod"]);
+    expect(o.models.every((m) => m.enabled)).toBe(true);
+    expect(o.section?.order).toEqual(["fel10", "enermod"]);
+    expect(o.recommended?.model).toBe("fel10");
+    const own = planBatteryOffer({ modelOrder: ["enermod", "fel10"], models: [{ productId: "fel10", enabled: false }] }, ctx({ settings }), result());
+    expect(own.section?.order).toEqual(["enermod"]);
+  });
+
+  it("slått av: kunden ser verken hybrid eller batteri", () => {
+    const o = planBatteryOffer({ enabled: false }, ctx(), result());
+    expect(o.section).toEqual({ enabled: false });
+  });
+});
