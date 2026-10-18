@@ -7,12 +7,8 @@ import { toLegacyPriceData } from "./legacy";
 import type { BatteryOfferResult } from "./battery";
 import type { CalculationResult } from "@/lib/engine";
 
-/** Standardverdier for økonomien som følger tilbudet (kopieres inn, så senere endringer ikke påvirker det). */
-export interface EconomyDefaults {
-  elPrice: number;
-  netPrice: number;
-  priceGrowthPercent: number;
-}
+import { economyFor, type EconomyDefaults } from "./economy";
+export type { EconomyDefaults };
 
 /** Regner et utkast helt: grunnkalkyle, batteritillegg og standardverdier. */
 export async function evaluateDraft(draft: Draft, installer: { id: string; teamId: string }) {
@@ -22,8 +18,8 @@ export async function evaluateDraft(draft: Draft, installer: { id: string; teamI
   const batteryOffer = draft.batteryOffer
     ? await computeBatteryOffer(draft.batteryOffer, installer, settings, draft.grid ?? "230", built.kwp, result)
     : null;
-  const e = draft.customerType === "business" ? settings.economy.business : settings.economy.private;
-  const economy: EconomyDefaults = { elPrice: e.elPrice, netPrice: e.netPrice, priceGrowthPercent: settings.economy.priceGrowthPercent };
+  // Låses med tilbudet (gjelder når det er signert). Usignerte tilbud henter gjeldende verdier.
+  const economy: EconomyDefaults = economyFor(settings, draft.customerType);
   return { built, result, batteryOffer, economy };
 }
 

@@ -2,6 +2,7 @@ import { z } from "zod";
 import { validateTiers } from "@/lib/engine";
 import { adminTeamId, requireAccess } from "@/lib/server/auth";
 import { asJson, sql } from "@/lib/server/db";
+import { loadSettings } from "@/lib/server/settings";
 import { body, handler, HttpError, preflight } from "@/lib/server/http";
 import { kroner, percent, tiers } from "@/lib/server/schemas";
 
@@ -34,6 +35,17 @@ const schema = z
     ),
     /** Standard for batteridelen av nye tilbud */
     batteryDefaults: z.object({ offerEnabled: z.boolean().optional(), models: z.array(z.uuid()).max(100).optional() }),
+    /** Forutsetninger i tilbudets økonomiberegning. Sendes samlet. */
+    offerAssumptions: z.object({
+      exportPrice: z.coerce.number().min(0).max(20),
+      selfUsePercent: z.coerce.number().min(1).max(100).nullable(),
+      degradationPercent: z.coerce.number().min(0).max(5),
+      replacementYear: z.coerce.number().int().min(1).max(30),
+      replacementFactor: z.coerce.number().min(0).max(5),
+      maintenancePerYear: z.coerce.number().min(0).max(1_000_000),
+      consumptionFallback: z.coerce.number().int().min(500).max(1_000_000),
+      periodYears: z.union([z.literal(10), z.literal(20), z.literal(30)]),
+    }).partial(),
   })
   .partial();
 
@@ -63,6 +75,7 @@ export const PUT = handler(async (req) => {
   if (input.economyPriceGrowthPercent !== undefined) columns.economy_price_growth_percent = input.economyPriceGrowthPercent;
   if (input.preferences !== undefined) columns.preferences = asJson(input.preferences);
   if (input.batteryDefaults !== undefined) columns.battery_defaults = asJson(input.batteryDefaults);
+  if (input.offerAssumptions !== undefined) columns.offer_assumptions = asJson(input.offerAssumptions);
 
   const sorted = input.commissionTiers ? validateTiers(input.commissionTiers, "commissionTiers") : null;
   if (sorted?.some((t) => t.min < 1)) throw new HttpError(400, "Provisjonstrinn starter på minst 1 panel", "BAD_REQUEST");
@@ -79,5 +92,6 @@ export const PUT = handler(async (req) => {
       }
     }
   });
-  return { ok: true };
+  // Svarer med det som faktisk er lagret, så dashboardet kan se at endringen ble tatt imot
+  return { ok: true, saved: Object.keys(input), settings: await loadSettings(teamId) };
 });

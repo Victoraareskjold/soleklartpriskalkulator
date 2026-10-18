@@ -9,6 +9,26 @@ export interface Preference {
 export type PreferenceKind = "inverter" | "hybrid" | "panel" | "battery";
 export type Preferences = Partial<Record<PreferenceKind, Preference>>;
 
+/** Forutsetninger i tilbudets økonomiberegning (utover strømpris, nettleie og prisvekst) */
+export interface OfferAssumptions {
+  /** Salgspris for overskuddsstrøm, kr/kWh */
+  exportPrice?: number;
+  /** Andel av solstrømmen kunden bruker selv, %. null = anslås automatisk */
+  selfUsePercent?: number | null;
+  /** Årlig produksjonsnedgang, % */
+  degradationPercent?: number;
+  /** År inverteren regnes som byttet */
+  replacementYear?: number;
+  /** Inverterbytte = inverterens pris × faktor */
+  replacementFactor?: number;
+  /** Faste driftskostnader per år, kr */
+  maintenancePerYear?: number;
+  /** Årsforbruk når verken kunden eller leaden har oppgitt det, kWh */
+  consumptionFallback?: number;
+  /** Perioden tilbudet viser først (10, 20 eller 30 år) */
+  periodYears?: number;
+}
+
 /** Standard for batteridelen av nye tilbud */
 export interface BatteryDefaults {
   /** Vis hybrid/batteri for kunden som standard */
@@ -41,6 +61,7 @@ export interface Settings {
   };
   preferences: Preferences;
   batteryDefaults: BatteryDefaults;
+  offerAssumptions: OfferAssumptions;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -59,6 +80,7 @@ export const DEFAULT_SETTINGS: Settings = {
   economy: { private: { elPrice: 0.56, netPrice: 0.62 }, business: { elPrice: 0.56, netPrice: 0.62 }, priceGrowthPercent: 2.5 },
   preferences: {},
   batteryDefaults: {},
+  offerAssumptions: {},
 };
 
 type SettingsRow = Omit<Settings, "economy"> & {
@@ -89,7 +111,8 @@ export async function loadSettings(teamId: string): Promise<Settings> {
            economy_net_price_business::float8 as "netBusiness",
            economy_price_growth_percent::float8 as "growth",
            preferences,
-           battery_defaults as "batteryDefaults"
+           battery_defaults as "batteryDefaults",
+           offer_assumptions as "offerAssumptions"
     from calc.settings where team_id = ${teamId}`;
   if (!row) return DEFAULT_SETTINGS;
   const { elPrivate, netPrivate, elBusiness, netBusiness, growth, ...rest } = row;
