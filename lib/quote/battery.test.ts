@@ -192,3 +192,42 @@ describe("runde 18.10: manuell hybrid, flere invertere, preferanser og batterist
     expect(o.section).toEqual({ enabled: false });
   });
 });
+
+describe("hybridoppgradering: egen kommisjon, manuell pris og rabatt (19.10)", () => {
+  // Prisforskjell: 23 000 × 1,10 − 9 000 × 1,10 = 15 400 kr
+  it("kommisjon i prosent av prisforskjellen", () => {
+    const o = planBatteryOffer({ hybridCommission: { mode: "percent", value: 10 } }, ctx(), result());
+    expect(o.upgrade.differenceOre).toBe(1_540_000);
+    expect(o.upgrade.commissionOre).toBe(154_000);
+    expect(o.upgrade.customerOre).toBe(1_694_000);
+    expect(o.section?.hybridUnitEx).toBe(16_940);
+  });
+  it("fast kommisjon i kroner", () => {
+    const o = planBatteryOffer({ hybridCommission: { mode: "amount", value: "2000" } }, ctx(), result());
+    expect(o.upgrade.commissionOre).toBe(200_000);
+    expect(o.upgrade.customerOre).toBe(1_740_000);
+  });
+  it("standard fra Beregningsregler brukes når tilbudet ikke har eget valg", () => {
+    const o = planBatteryOffer({}, ctx({ settings: { ...ctx().settings, hybridCommission: { mode: "percent", value: 5 } } }), result());
+    expect(o.upgrade.commission).toMatchObject({ mode: "percent", percent: 5, fromDefault: true });
+    expect(o.upgrade.commissionOre).toBe(77_000);
+  });
+  it("manuell pris: rabatt regnes ut, og grunnlag + kommisjon = pris", () => {
+    // Kunden skal betale 15 000 eks. mva. med 10 % kommisjon: grunnlag 13 636,36, kommisjon 1 363,64, rabatt 1 763,64
+    const o = planBatteryOffer({ hybridPrice: "15000", hybridCommission: { mode: "percent", value: 10 } }, ctx(), result());
+    expect(o.upgrade.manualPrice).toBe(true);
+    expect(o.upgrade.customerOre).toBe(1_500_000);
+    expect(o.upgrade.saleOre + o.upgrade.commissionOre).toBe(1_500_000);
+    expect(o.upgrade.saleOre).toBe(1_363_636);
+    expect(o.upgrade.discountOre).toBe(1_540_000 - 1_363_636);
+    // Fast kommisjon: hele rabatten tas fra installatørens del
+    const f = planBatteryOffer({ hybridPrice: 15000, hybridCommission: { mode: "amount", value: 1000 } }, ctx(), result());
+    expect(f.upgrade).toMatchObject({ commissionOre: 100_000, saleOre: 1_400_000, discountOre: 140_000, customerOre: 1_500_000 });
+  });
+  it("auto: samme sats som grunnkalkylen (uendret oppførsel)", () => {
+    const o = planBatteryOffer({}, ctx(), result());
+    expect(o.upgrade.commission.mode).toBe("auto");
+    expect(o.upgrade.commission.percent).toBeCloseTo(24, 6);
+    expect(o.upgrade.customerOre).toBe(1_909_600);
+  });
+});

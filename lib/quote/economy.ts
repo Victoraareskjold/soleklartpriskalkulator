@@ -23,6 +23,9 @@ export const ASSUMPTION_DEFAULTS: Required<Omit<OfferAssumptions, "selfUsePercen
   maintenancePerYear: 0,
   consumptionFallback: 20000,
   periodYears: 30,
+  productWarrantyYears: 25,
+  powerWarrantyYears: 30,
+  expectedLifetimeYears: 40,
 };
 
 export function economyFor(settings: Settings, customerType: "private" | "business"): EconomyDefaults {
@@ -40,6 +43,9 @@ export function economyFor(settings: Settings, customerType: "private" | "busine
     maintenancePerYear: a.maintenancePerYear,
     consumptionFallback: a.consumptionFallback,
     periodYears: a.periodYears,
+    productWarrantyYears: a.productWarrantyYears,
+    powerWarrantyYears: a.powerWarrantyYears,
+    expectedLifetimeYears: a.expectedLifetimeYears,
   };
 }
 

@@ -34,7 +34,11 @@ const schema = z
       z.object({ supplierIds: z.array(z.uuid()).max(50).default([]), brands: z.array(z.string().trim().min(1).max(60)).max(20).default([]) }),
     ),
     /** Standard for batteridelen av nye tilbud */
-    batteryDefaults: z.object({ offerEnabled: z.boolean().optional(), models: z.array(z.uuid()).max(100).optional() }),
+    batteryDefaults: z.object({
+      offerEnabled: z.boolean().optional(),
+      models: z.array(z.uuid()).max(100).optional(),
+      hybridCommission: z.object({ mode: z.enum(["auto", "percent", "amount"]), value: z.coerce.number().min(0).max(1_000_000).nullish() }).nullish(),
+    }),
     /** Forutsetninger i tilbudets økonomiberegning. Sendes samlet. */
     offerAssumptions: z.object({
       exportPrice: z.coerce.number().min(0).max(20),
@@ -45,6 +49,9 @@ const schema = z
       maintenancePerYear: z.coerce.number().min(0).max(1_000_000),
       consumptionFallback: z.coerce.number().int().min(500).max(1_000_000),
       periodYears: z.union([z.literal(10), z.literal(20), z.literal(30)]),
+      productWarrantyYears: z.coerce.number().int().min(0).max(60),
+      powerWarrantyYears: z.coerce.number().int().min(0).max(60),
+      expectedLifetimeYears: z.coerce.number().int().min(1).max(80),
     }).partial(),
   })
   .partial();

@@ -27,6 +27,12 @@ export interface OfferAssumptions {
   consumptionFallback?: number;
   /** Perioden tilbudet viser først (10, 20 eller 30 år) */
   periodYears?: number;
+  /** Panelenes produktgaranti, år */
+  productWarrantyYears?: number;
+  /** Panelenes effektgaranti, år */
+  powerWarrantyYears?: number;
+  /** Forventet levetid for panelene, år (vises som «over N år») */
+  expectedLifetimeYears?: number;
 }
 
 /** Standard for batteridelen av nye tilbud */
@@ -35,6 +41,8 @@ export interface BatteryDefaults {
   offerEnabled?: boolean;
   /** Batterimodeller kunden ser, i rekkefølge (produkt-ID-er). Tom = alle med valgt batteritype */
   models?: string[];
+  /** Standard Soleklart-kommisjon på hybridoppgraderinger. Mangler = grunnkalkylens sats */
+  hybridCommission?: { mode: "auto" | "percent" | "amount"; value?: number | string | null } | null;
 }
 
 /** Sentrale beregningsregler for teamet. Beløp i øre. */

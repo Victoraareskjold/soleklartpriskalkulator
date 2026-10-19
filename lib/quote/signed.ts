@@ -47,9 +47,9 @@ export function signedBreakdown(base: CalculationResult, offer: BatteryOfferResu
       quantity: offer.hybrid.quantity ?? 1,
       purchaseOre: offer.hybrid.purchaseOre * (offer.hybrid.quantity ?? 1),
       installerMarkupOre: (offer.hybrid.saleOre - offer.hybrid.purchaseOre) * (offer.hybrid.quantity ?? 1),
-      // Mellomlegget: hybrid med påslag minus stringinverteren slik den står i grunnpakken
+      // Mellomlegget: hybrid med påslag minus stringinverteren slik den står i grunnpakken, minus eventuell rabatt
       saleOre: offer.upgrade.saleOre,
-      soleklartOre: offer.upgrade.customerOre - offer.upgrade.saleOre,
+      soleklartOre: offer.upgrade.commissionOre ?? offer.upgrade.customerOre - offer.upgrade.saleOre,
       customerOre: offer.upgrade.customerOre,
     });
   }

@@ -40,6 +40,7 @@ export async function computeBatteryOffer(
       noPanelCommissionPercent: settings.noPanelCommissionPercent,
       preferences: { hybrid: settings.preferences.hybrid, battery: settings.preferences.battery },
       batteryModels: settings.batteryDefaults.models ?? [],
+      hybridCommission: settings.batteryDefaults.hybridCommission ?? null,
     },
     grid,
     kwp,

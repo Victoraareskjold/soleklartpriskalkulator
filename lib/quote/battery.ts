@@ -35,6 +35,14 @@ const hybridCustomSchema = z.object({
   quantity: z.number().int().min(1).max(50).optional(),
 });
 
+/** Soleklart-kommisjon på hybridoppgraderingen: auto = samme sats som grunnkalkylen */
+export const hybridCommissionSchema = z.object({
+  mode: z.enum(["auto", "percent", "amount"]),
+  /** Prosent av grunnlaget (prisforskjell etter rabatt), eller fast beløp i kr eks. mva. */
+  value: z.union([z.string(), z.number()]).nullish(),
+});
+export type HybridCommission = z.infer<typeof hybridCommissionSchema>;
+
 export const batteryOfferSchema = z.looseObject({
   /** Vis batteriseksjonen i tilbudet */
   enabled: z.boolean().optional().default(true),
@@ -43,6 +51,10 @@ export const batteryOfferSchema = z.looseObject({
   hybridProductId: z.string().nullish(),
   /** Egen hybridinverter som ikke ligger i katalogen (navn, innkjøp per stk, antall) */
   hybridCustom: hybridCustomSchema.nullish(),
+  /** Soleklart-kommisjon på hybridoppgraderingen. Mangler = standarden (Beregningsregler) eller grunnkalkylens sats */
+  hybridCommission: hybridCommissionSchema.nullish(),
+  /** Manuell pris kunden betaler for oppgraderingen, kr eks. mva. Differansen blir rabatt (eller tillegg). */
+  hybridPrice: z.union([z.string(), z.number()]).nullish(),
   /** Antall hybridinvertere. Mangler = like mange som stringinvertere i grunnpakken */
   hybridQuantity: z.number().int().min(1).max(50).nullish(),
   /** Rekkefølgen batterimodellene vises i for kunden (produkt-ID-er). Mangler = standardoppsettet */
@@ -107,6 +119,8 @@ export interface OfferContext {
     preferences?: { hybrid?: Preference; battery?: Preference };
     /** Standard batteriutvalg og rekkefølge for nye tilbud */
     batteryModels?: string[];
+    /** Standard kommisjon på hybridoppgraderinger */
+    hybridCommission?: HybridCommission | null;
   };
   grid: "230" | "400";
   kwp: number;
@@ -148,7 +162,21 @@ export interface BatteryOfferResult {
       })
     | null;
   /** Mellomlegg for å bytte til hybrid */
-  upgrade: { saleOre: number; customerOre: number };
+  /**
+   * Mellomlegget for å bytte til hybrid, øre eks. mva.:
+   *   prisforskjell (hybrid salg − stringinverter salg) − rabatt = grunnlag
+   *   grunnlag + Soleklart-kommisjon = kundepris
+   * saleOre = grunnlaget (installatørens del etter rabatt). Alltid: customerOre = saleOre + commissionOre.
+   */
+  upgrade: {
+    differenceOre: number;
+    discountOre: number;
+    saleOre: number;
+    commissionOre: number;
+    customerOre: number;
+    commission: { mode: "auto" | "percent" | "amount"; percent: number | null; amountOre: number | null; fromDefault: boolean };
+    manualPrice: boolean;
+  };
   hybridCandidates: { productId: string; name: string; acKw: number | null; supplier: string; purchaseOre: number; fits: boolean; preferred: boolean }[];
   install: (PriceSteps & { workTypeId: string | null; name: string }) | null;
   models: {
@@ -294,7 +322,37 @@ export function planBatteryOffer(draft: BatteryOfferDraft | undefined, ctx: Offe
   const hybridSteps = hybridProduct ? steps(hybridProduct.priceOre, materialMarkup) : null;
   // Mellomlegg: hybridene (med påslag) − stringinverterne de erstatter, slik de står i grunnpakken
   const replaced = Math.min(hybridQty, stringQty) * (stringInverter?.saleUnitOre ?? 0);
-  const upgradeSale = hybridIncluded || !hybridSteps ? 0 : Math.max(0, hybridQty * hybridSteps.saleOre - replaced);
+  const difference = hybridIncluded || !hybridSteps ? 0 : Math.max(0, hybridQty * hybridSteps.saleOre - replaced);
+
+  // Kommisjon på oppgraderingen: tilbudets valg → standard fra Beregningsregler → grunnkalkylens sats
+  const commissionChoice = offer.hybridCommission ?? ctx.settings.hybridCommission ?? { mode: "auto" as const, value: null };
+  const commissionValue = num(commissionChoice.value);
+  const commissionMode: "auto" | "percent" | "amount" =
+    commissionChoice.mode !== "auto" && Number.isFinite(commissionValue) && commissionValue >= 0 ? commissionChoice.mode : "auto";
+  const pct = commissionMode === "percent" ? commissionValue / 100 : commissionMode === "auto" ? rate : null;
+  const fixedOre = commissionMode === "amount" ? Math.round(commissionValue * 100) : null;
+
+  // Manuell kundepris (eks. mva.): grunnlaget regnes tilbake, så kundepris = grunnlag + kommisjon alltid stemmer
+  const manual = num(offer.hybridPrice);
+  const manualPrice = !hybridIncluded && !!hybridSteps && Number.isFinite(manual) && manual >= 0;
+  let upgradeSale: number;
+  let commissionOre: number;
+  if (manualPrice) {
+    const priceOre = Math.round(manual * 100);
+    if (fixedOre != null) {
+      commissionOre = Math.min(fixedOre, priceOre);
+      upgradeSale = priceOre - commissionOre;
+    } else {
+      upgradeSale = Math.round(priceOre / (1 + (pct ?? 0)));
+      commissionOre = priceOre - upgradeSale;
+    }
+    if (fixedOre != null && fixedOre > priceOre) warnings.push("Den faste kommisjonen er høyere enn prisen for oppgraderingen. Kommisjonen er satt lik prisen.");
+  } else {
+    upgradeSale = difference;
+    commissionOre = fixedOre != null ? (difference > 0 ? fixedOre : 0) : Math.round(difference * (pct ?? 0));
+  }
+  const discountOre = difference - upgradeSale;
+  const upgradeCustomer = upgradeSale + commissionOre;
   if (!hybridIncluded && hybridSteps && stringInverter && hybridQty * hybridSteps.saleOre < replaced) {
     warnings.push("Hybridinverteren er rimeligere enn stringinverteren. Mellomlegget settes til 0 kr.");
   }
@@ -380,7 +438,7 @@ export function planBatteryOffer(draft: BatteryOfferDraft | undefined, ctx: Offe
         enabled: true,
         pricesIncludeCommission: true,
         hybridQty,
-        hybridUnitEx: kr(customer(upgradeSale) / Math.max(1, hybridQty)),
+        hybridUnitEx: kr(upgradeCustomer / Math.max(1, hybridQty)),
         hybridIncluded,
         hybrid: hybridProduct
           ? { name: hybridProduct.name, acKw: num(hybridProduct.specs.acKw) || null, datasheetUrl: hybridProduct.attachmentUrl }
@@ -437,7 +495,20 @@ export function planBatteryOffer(draft: BatteryOfferDraft | undefined, ctx: Offe
           ...hybridSteps,
         }
       : null,
-    upgrade: { saleOre: upgradeSale, customerOre: customer(upgradeSale) },
+    upgrade: {
+      differenceOre: difference,
+      discountOre,
+      saleOre: upgradeSale,
+      commissionOre,
+      customerOre: upgradeCustomer,
+      commission: {
+        mode: commissionMode,
+        percent: pct == null ? null : Math.round(pct * 1_000_000) / 10_000,
+        amountOre: fixedOre,
+        fromDefault: !offer.hybridCommission && !!ctx.settings.hybridCommission,
+      },
+      manualPrice,
+    },
     hybridCandidates,
     install,
     models,

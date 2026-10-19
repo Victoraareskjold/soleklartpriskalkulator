@@ -11,7 +11,7 @@ const DEFAULT_SETTINGS = {
 describe("forutsetninger for tilbudet", () => {
   it("standardverdier: 30 år, salgspris 0,60, automatisk egenbruk", () => {
     const e = economyFor(DEFAULT_SETTINGS, "private");
-    expect(e).toMatchObject({ elPrice: 0.56, netPrice: 0.62, priceGrowthPercent: 2.5, exportPrice: 0.6, selfUsePercent: null, periodYears: 30, replacementYear: 15 });
+    expect(e).toMatchObject({ elPrice: 0.56, netPrice: 0.62, priceGrowthPercent: 2.5, exportPrice: 0.6, selfUsePercent: null, periodYears: 30, replacementYear: 15, productWarrantyYears: 25, powerWarrantyYears: 30, expectedLifetimeYears: 40 });
   });
   it("verdier fra Beregningsregler vinner, og næring får næringspris", () => {
     const settings = {
