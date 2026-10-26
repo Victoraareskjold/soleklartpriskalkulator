@@ -5,8 +5,13 @@ import { loadCalculation } from "@/lib/quote/access";
 import { requireAccess } from "@/lib/server/auth";
 import { asJson, sql } from "@/lib/server/db";
 import { body, handler, HttpError, preflight } from "@/lib/server/http";
+import { loadAnalysis } from "@/lib/server/naering/store";
+import { execute, investmentFromDraft, lockRun, notCalculated, prepareRun, type PreparedRun } from "@/lib/server/naering/run";
+import type { AnalysisResult } from "@/lib/naering/analysis";
 
 export const OPTIONS = preflight;
+// Næring: analysen regnes før låsing (henter spotpriser/PVGIS hvis de ikke er mellomlagret)
+export const maxDuration = 60;
 
 const schema = z.object({
   lockVersion: z.number().int().positive(),
@@ -38,6 +43,24 @@ export const POST = handler<{ id: string }>(async (req, { id }) => {
   const { result } = evaluated;
   if (!result.ready) {
     throw new HttpError(422, result.warnings.find((w) => w.blocking)?.message ?? "Kalkylen kan ikke lagres", "NOT_READY");
+  }
+
+  // Næring: analysen regnes (med lagret grunnlag) før transaksjonen, og låses sammen med versjonen.
+  // Mangler det opplysninger, lagres tilbudet likevel med «ikke beregnet» og årsaken – aldri en stille nullverdi.
+  let business: { analysisId: string; prepared: PreparedRun; result: AnalysisResult } | { error: string } | null = null;
+  const businessAnalysisId = input.draft.customerType === "business" ? input.draft.businessAnalysisId : undefined;
+  if (businessAnalysisId) {
+    const analysis = await loadAnalysis(access, businessAnalysisId);
+    const [calcLead] = await sql<{ lead_id: string | null }[]>`select lead_id from calc.calculations where id = ${id}`;
+    if (calcLead?.lead_id && calcLead.lead_id !== analysis.lead_id) throw new HttpError(400, "Næringsanalysen hører til en annen lead", "BAD_REQUEST");
+    try {
+      const inv = investmentFromDraft({ battery: input.draft.battery, lines: evaluated.built.input.lines }, result.totals.totalExVat);
+      const prepared = await prepareRun(analysis, { kwp: evaluated.built.kwp, investmentNok: inv.nok, investmentNote: inv.note });
+      business = { analysisId: analysis.id, prepared, result: execute(prepared) };
+    } catch (e) {
+      if (!(e instanceof HttpError) || e.status >= 500 && e.status !== 502) throw e;
+      business = { error: e.message };
+    }
   }
 
   return sql.begin(async (tx) => {
@@ -80,11 +103,19 @@ export const POST = handler<{ id: string }>(async (req, { id }) => {
       returning lock_version`;
 
     // Batteritillegget regnes nå i kalkylen. Eldre utkast uten batteroppsett beholder estimatets batterySection.
-    const priceData = priceDataFor(result, versionInput(evaluated), {
-      quoteVersionId: saved.id,
-      simulationPdfUrl,
-      keepBatterySection: batterySection,
-    });
+    const businessAnalysis = !business
+      ? undefined
+      : "error" in business
+        ? notCalculated(business.error)
+        : await lockRun(tx, business.analysisId, saved.id, calc.estimate_id, business.prepared, business.result, access.userId);
+    const priceData = {
+      ...priceDataFor(result, versionInput(evaluated), {
+        quoteVersionId: saved.id,
+        simulationPdfUrl,
+        keepBatterySection: batterySection,
+      }),
+      ...(businessAnalysis ? { businessAnalysis } : {}),
+    };
     if (calc.estimate_id) {
       await tx`
         update public.estimates

@@ -33,6 +33,14 @@ admin/member ser alle installatører i teamet, installatør bare sin egen. Belø
 | POST | `/api/calculations/[id]/versions` | Låst versjon. Header `Idempotency-Key`. Regner på nytt fra DB, skriver `estimates.price_data` + `quote_version_id` hvis kalkylen har estimat |
 | GET | `/api/quote-versions/[id]` | Låst versjon med input, resultat og price_data |
 | POST | `/api/preview` | Forhåndsvisning av et utkast med samme regler som lagring (kWp, støtte, katalogdata fra DB) |
+| GET/POST | `/api/business` | Næringsanalyse for en lead (`?leadId=`) / opprett |
+| PUT | `/api/business/[id]` | Lagre innstillinger (`lockVersion`) |
+| POST | `/api/business/[id]/files` | Last opp XLSX/CSV (rå bytes, `X-File-Name`). Svar: foreslått tolkning |
+| POST | `/api/business/[id]/files/[fileId]/import` | Datakontroll (`confirm:false`) eller bruk serien (`confirm:true`) |
+| PATCH | `/api/business/[id]/series/[seriesId]` | Slå en serie av/på |
+| POST | `/api/business/[id]/run` | Beregn (lagret grunnlag, eller `refresh:true` = hent kildedata på nytt). Lagrer ingenting |
+| GET/POST | `/api/business/tariffs` | Tariffregister / registrer tariff manuelt (teamet) |
+| POST | `/api/business/geocode` | Adresse → koordinater og foreslått prisområde (Kartverket) |
 | — | admin | `products`, `suppliers`, `categories`, `markup-groups`, `work-types`, `installers/[id]/{markups,work-rates,mount-rates,volume-tiers}`, `settings` (provisjon, mva., inverterfaktor, støtteregler) |
 
 ## Miljøvariabler
@@ -45,8 +53,11 @@ admin/member ser alle installatører i teamet, installatør bare sin egen. Belø
 lib/engine/   Regnemotor. Ren TypeScript, ingen DB/UI. Alle beløp ut i øre.
 app/api/      API-ruter
 lib/server/   DB-tilkobling, innlogging/tilgang, CORS og feilhåndtering
-db/           SQL: 001 schema, 002 import, 003 estimates.quote_version_id, 004 regler/produktdata, 005 sletting av estimat/lead
-docs/         opprydding.md: hva som slettes til slutt
+db/           SQL (009 = næringsanalyse): 001 schema, 002 import, 003 estimates.quote_version_id, 004 regler/produktdata, 005 sletting av estimat/lead
+lib/naering/  Næringsanalysen (trinn 1): import og datakontroll, tid/sommertid, PVGIS, spotpriser,
+              standardprofiler, tariff, timemotor, levetidsøkonomi. Ren TypeScript, ingen DB.
+lib/server/naering/  Datagrunnlag fra DB og eksterne kilder (mellomlagret), låsing med tilbudsversjonen
+docs/         opprydding.md: hva som slettes til slutt. naeringsanalyse.md: status trinn 1
 ```
 
 ## Regler

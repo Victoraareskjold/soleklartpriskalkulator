@@ -52,6 +52,8 @@ export const draftSchema = z.looseObject({
   battery: z.boolean().optional().default(false),
   /** Batteri og hybrid som tillegg kunden kan velge i tilbudet */
   batteryOffer: batteryOfferSchema.optional(),
+  /** Næring: analysen som regnes og låses sammen med tilbudsversjonen (calc.business_analyses) */
+  businessAnalysisId: z.uuid().optional(),
 });
 
 export type Draft = z.infer<typeof draftSchema>;
