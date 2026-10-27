@@ -1,11 +1,6 @@
 import type { TimeSeries } from "../types";
 import type { BuyAgreement, SellAgreement, Taxes } from "../tariff";
 import { HOUR, hoursInYear, osloLocalToUtc, osloParts } from "../time";
-import { existsSync } from "node:fs";
-
-export const VEDLEGG =
-  process.env.VEDLEGG_DIR ?? "../../Downloads/Victor_naeringsanalyse_vedlegg_2026-10-21/";
-export const hasVedlegg = existsSync(VEDLEGG + "01_Forbruk_Aalesund_2024.xlsx");
 
 export function yearSeries(year: number, kind: TimeSeries["kind"], f: (t: number, i: number) => number): TimeSeries {
   const start = osloLocalToUtc(year, 1, 1, 0)[0];
