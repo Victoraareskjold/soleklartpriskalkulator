@@ -5,6 +5,7 @@ import { body, handler, HttpError, preflight } from "@/lib/server/http";
 import { uuid } from "@/lib/server/schemas";
 import { analysisDto, leadInstaller, listSeries, seriesDto, type AnalysisRow } from "@/lib/server/naering/store";
 import { settingsSchema } from "@/lib/naering/settings";
+import { geocode } from "@/lib/server/naering/sources";
 
 export const OPTIONS = preflight;
 
@@ -31,6 +32,11 @@ export const POST = handler(async (req) => {
   const { installer, lead } = await leadInstaller(access, input.leadId);
   const settings = input.settings ?? settingsSchema.parse({});
   if (!settings.location.address && lead.address) settings.location.address = lead.address;
+  // Foreslå koordinater og prisområde med en gang (merkes «foreslått» og må kontrolleres)
+  if (settings.location.address && settings.location.lat == null) {
+    const g = await geocode(settings.location.address).catch(() => null);
+    if (g) settings.location = { ...settings.location, lat: g.lat, lon: g.lon, priceArea: settings.location.priceArea ?? g.priceArea, priceAreaSource: "foreslått" };
+  }
   const [row] = await sql<AnalysisRow[]>`
     insert into calc.business_analyses (team_id, installer_group_id, lead_id, settings, created_by, updated_by)
     values (${installer.teamId}, ${installer.id}, ${input.leadId}, ${asJson(settings)}, ${access.userId}, ${access.userId})

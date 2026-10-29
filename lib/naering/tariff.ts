@@ -36,12 +36,24 @@ export interface Tariff {
   vat: "eks_mva";
   provenance: Provenance & { lastChecked: string; url?: string };
   notes: string[];
+  /** Kundegruppens grenser for årsforbruk, når tariffen har det (f.eks. «over 100 000 kWh») */
+  minAnnualKwh?: number | null;
+  maxAnnualKwh?: number | null;
+  /** Hva som allerede er inkludert i satsene (f.eks. Enova-påslag i fastleddet) */
+  includedNote?: string;
+}
+
+/** Om tariffens gyldighet dekker hele perioden [fromDay, toDay]. */
+export function tariffCovers(t: Pick<Tariff, "validFrom" | "validTo">, fromDay: string, toDay: string) {
+  return t.validFrom <= fromDay && (!t.validTo || t.validTo >= toDay);
 }
 
 export interface Taxes {
-  /** Elavgift (forbruksavgift) i øre/kWh etter kundens faktiske avgiftsstatus */
+  /** Fast sats (øre/kWh) når ingen periode dekker timen – brukes for oppgitt egen sats */
   elavgiftOrePerKwh: number;
-  status: "ordinær" | "redusert" | "ukjent";
+  /** Satser per periode (lokale datoer). Har forrang foran fast sats. */
+  periods?: { from: string; to: string; orePerKwh: number }[];
+  status: "ordinær" | "redusert" | "fritak" | "ukjent";
   provenance: Provenance;
 }
 
@@ -93,6 +105,8 @@ export const LINJA_2024_LAVSPENT_STOR: Tariff = {
     lastChecked: "2026-10-21",
     url: "https://cdn.sanity.io/files/zg947p2r/production/19fdaa8dbfba0dd59d6b63fdd462787d87091537.pdf",
   },
+  minAnnualKwh: 100_000,
+  includedNote: "Fastleddet inkluderer Enova-påslaget (800 kr/år). Elavgift og mva. kommer i tillegg.",
   notes: [
     "Sommer = april–september (kildens «31. september» tolket som 30. september).",
     "Helligdager holdes utenfor effektvinduet: april 2024 stemmer bare slik (2. påskedag 1.4. ville gitt for høy topp).",

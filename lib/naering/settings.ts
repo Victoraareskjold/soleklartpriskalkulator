@@ -20,6 +20,8 @@ export const surfaceSchema = z.object({
   /** Fast kWp for flaten. null = fordel kalkylens kWp etter panelantall. */
   kwp: z.number().min(0).max(100_000).nullable().default(null),
   tiltDeg: z.number().min(0).max(90),
+  /** Eksempelrad (ingen takflater i tilbudet). Vises tydelig som antatt. */
+  assumed: z.boolean().default(false),
   /** Asimut fra nord: 180 = sør, 90 = øst, 270 = vest */
   azimuthDeg: z.number().min(0).max(360),
 });
@@ -71,6 +73,10 @@ export const settingsSchema = z.object({
       label: z.string().max(80).default("Hovedmåler"),
       meterId: z.string().max(40).default(""),
       tariffId: z.uuid().nullable().default(null),
+      /** Selger har kontrollert tariffen mot kundens nettleiefaktura */
+      tariffConfirmed: z.boolean().default(false),
+      /** Tariffen dekker ikke analyseperioden; selger har valgt å bruke den som scenario */
+      tariffScenario: z.boolean().default(false),
       exportLimitKw: z.number().min(0).max(100_000).nullable().default(null),
       buy: z
         .object({ markupOrePerKwh: z.number().min(-100).max(500).default(0), monthlyFeeNok: z.number().min(0).max(100_000).default(0), status: status.default("antatt") })
@@ -78,8 +84,9 @@ export const settingsSchema = z.object({
       sell: z.object({ deductionOrePerKwh: z.number().min(-100).max(500).default(0), status: status.default("antatt") }).prefault({}),
       elavgift: z
         .object({
+          /** Egen sats for hele perioden (oppgitt). null = periodens offisielle satser for avgiftsstatusen. */
           orePerKwh: z.number().min(0).max(100).nullable().default(null),
-          taxStatus: z.enum(["ordinær", "redusert", "ukjent"]).default("ukjent"),
+          taxStatus: z.enum(["ordinær", "redusert", "fritak", "ukjent"]).default("ukjent"),
           status: status.default("antatt"),
         })
         .prefault({}),
@@ -98,11 +105,14 @@ export const settingsSchema = z.object({
         })
         .prefault({}),
       degradationPct: z.number().min(0).max(5).default(0.4),
-      opex: z.array(z.object({ name: z.string().max(80), nokPerYear: z.number().min(0).max(1e8) })).max(20).default([{ name: "Service", nokPerYear: 2500 }]),
+      /** Løpende kostnader som følger av tiltaket. Tom = ikke oppgitt (vises som antakelse). */
+      opex: z.array(z.object({ name: z.string().max(80), nokPerYear: z.number().min(0).max(1e8) })).max(20).default([]),
+      /** kalkyle = tilbudets inverter × faktor fra Beregningsregler, manuell = replacements, ingen = ikke med */
+      replacementSource: z.enum(["kalkyle", "manuell", "ingen"]).default("kalkyle"),
       replacements: z
         .array(z.object({ name: z.string().max(120), year: z.number().int().min(1).max(50), nok: z.number().min(0).max(1e9) }))
         .max(20)
-        .default([{ name: "Inverterbytte (90 000 materiell + 70 000 installasjon)", year: 15, nok: 160_000 }]),
+        .default([]),
       investment: z
         .object({
           /** kalkyle = tilbudets sum eks. mva. for solcelleanlegget (uten batteritillegg) */

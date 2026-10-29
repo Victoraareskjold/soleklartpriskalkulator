@@ -60,7 +60,7 @@ export function buildPriceSeries(rows: HvaKosterRow[], area: PriceArea): { serie
       unit: "NOK/kWh",
       provenance: {
         status: "målt",
-        source: `hvakosterstrommen.no ${area} (ENTSO-E, omregnet til NOK, eks. mva.)`,
+        source: `Historiske markedspriser ${area} fra hvakosterstrommen.no (ENTSO-E i euro, omregnet til NOK av tjenesten, eks. mva.) – ikke kundens avregning`,
         period: { from: fmtLocal(start), to: fmtLocal(end - HOUR) },
       },
     },

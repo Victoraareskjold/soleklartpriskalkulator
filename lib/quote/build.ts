@@ -23,6 +23,8 @@ export interface LineMeta {
   productName?: string;
   attachmentUrl?: string | null;
   capacityKwh?: number | null;
+  /** Inverter: AC-effekt (kW) fra produktdata. Brukes til kapping i næringsanalysen. */
+  acKw?: number | null;
   workGroup?: string;
   roofTypeName?: string;
   catalogBaseUnit?: string | null;
@@ -99,6 +101,7 @@ export async function buildEngineInput(draft: Draft, installer: { id: string; te
         productName: p.name,
         attachmentUrl: p.attachment_url,
         capacityKwh: typeof p.specs?.capacityKwh === "number" ? p.specs.capacityKwh : null,
+        acKw: typeof p.specs?.acKw === "number" ? p.specs.acKw : null,
       });
     } else if (line.sourceId && line.kind === "mount") {
       const m = mounts.find((x) => x.roof_type_id === line.sourceId);

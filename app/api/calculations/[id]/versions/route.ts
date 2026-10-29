@@ -6,7 +6,7 @@ import { requireAccess } from "@/lib/server/auth";
 import { asJson, sql } from "@/lib/server/db";
 import { body, handler, HttpError, preflight } from "@/lib/server/http";
 import { loadAnalysis } from "@/lib/server/naering/store";
-import { execute, investmentFromDraft, lockRun, notCalculated, prepareRun, type PreparedRun } from "@/lib/server/naering/run";
+import { execute, lockRun, notCalculated, prepareRun, quoteContext, type PreparedRun } from "@/lib/server/naering/run";
 import type { AnalysisResult } from "@/lib/naering/analysis";
 
 export const OPTIONS = preflight;
@@ -54,9 +54,13 @@ export const POST = handler<{ id: string }>(async (req, { id }) => {
     const [calcLead] = await sql<{ lead_id: string | null }[]>`select lead_id from calc.calculations where id = ${id}`;
     if (calcLead?.lead_id && calcLead.lead_id !== analysis.lead_id) throw new HttpError(400, "Næringsanalysen hører til en annen lead", "BAD_REQUEST");
     try {
-      const inv = investmentFromDraft({ battery: input.draft.battery, lines: evaluated.built.input.lines }, result.totals.totalExVat);
-      const prepared = await prepareRun(analysis, { kwp: evaluated.built.kwp, investmentNok: inv.nok, investmentNote: inv.note });
-      business = { analysisId: analysis.id, prepared, result: execute(prepared) };
+      const quote = quoteContext(evaluated.built, result, evaluated.built.rules.settings, input.draft);
+      const prepared = await prepareRun(analysis, { quote });
+      const res = execute(prepared);
+      // Feil i grunnlaget (f.eks. tariff for feil år uten scenario-merking) → ikke med i tilbudet
+      business = res.valid
+        ? { analysisId: analysis.id, prepared, result: res }
+        : { error: res.issues.filter((i) => i.level === "feil").map((i) => i.message).join(" ") };
     } catch (e) {
       if (!(e instanceof HttpError) || e.status >= 500 && e.status !== 502) throw e;
       business = { error: e.message };

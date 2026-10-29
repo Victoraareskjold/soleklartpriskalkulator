@@ -5,8 +5,26 @@
 /** Hvordan en verdi er fremkommet. Vises til selger og kunde. */
 export type DataStatus = "målt" | "beregnet" | "antatt";
 
+/**
+ * Hva slags kilde en verdi har. Mer presist enn status: offentlige spotpriser er «markedspriser»,
+ * ikke måledata, og en tariff i registeret er ikke automatisk bekreftet for kundens målepunkt.
+ */
+export type SourceType = "måledata" | "markedspriser" | "tariffregister" | "simulert" | "oppgitt" | "antatt" | "beregnet";
+
+/** Avvik som vises ved feltet og i oppsummeringen over resultatet. */
+export interface AnalysisIssue {
+  /** feil = ugyldig/motstridende grunnlag (resultatet kan ikke brukes i tilbud), advarsel = må vurderes, antakelse = brukbart, men anslått */
+  level: "feil" | "advarsel" | "antakelse";
+  /** Feltgruppe i skjemaet: forbruk, produksjon, takflater, tariff, elavgift, avtaler, økonomi, periode, sted */
+  field: string;
+  message: string;
+}
+
 export interface Provenance {
   status: DataStatus;
+  sourceType?: SourceType;
+  /** Bekreftet for denne kunden/perioden (f.eks. tariff kontrollert mot nettleiefaktura) */
+  confirmed?: boolean;
   /** Kort, lesbar kilde: «Elhub-eksport (fil 01)», «PVGIS 6», «Standardprofil kontor» */
   source: string;
   /** Periode verdien gjelder, ISO-datoer i lokal tid */

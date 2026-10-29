@@ -98,3 +98,30 @@ describe("økonomi", () => {
     expect(r.npv!).toBeLessThan(0);
   });
 });
+
+describe("runde A: avgiftsperioder, inverterkapping, historisk netto", () => {
+  test("elavgift følger periodene i året (2025: 9,79 / 16,93 / 12,53)", async () => {
+    const { taxPeriods } = await import("../taxes");
+    const tp = taxPeriods("ordinær", "2025-01-01", "2025-12-31");
+    expect(tp.missing).toBeNull();
+    const l25 = yearSeries(2025, "forbruk", () => 10);
+    const sp25 = yearSeries(2025, "pris", () => 0.5);
+    const r = simulate({ ...base, load: l25, spot: sp25, pv: null, taxes: { ...taxes, elavgiftOrePerKwh: 0, periods: tp.periods } });
+    expect(r.months[0].cost.elavgift / r.months[0].importKwh).toBeCloseTo(0.0979, 6);
+    expect(r.months[5].cost.elavgift / r.months[5].importKwh).toBeCloseTo(0.1693, 6);
+    expect(r.months[10].cost.elavgift / r.months[10].importKwh).toBeCloseTo(0.1253, 6);
+  });
+
+  test("manglende sats gir avvik, ikke stille null", async () => {
+    const { taxPeriods } = await import("../taxes");
+    expect(taxPeriods("redusert", "2025-01-01", "2025-12-31").missing).toBe("2025-01-01");
+  });
+
+  test("inverterens AC-effekt kapper produksjonen, og energien balanserer", () => {
+    const pv = yearSeries(2024, "produksjon", (t) => (osloParts(t).hour === 12 ? 100 : 0));
+    const r = simulate({ ...base, pv, inverterAcKw: 60 });
+    expect(r.total.clippedKwh).toBeCloseTo(40 * 366, 6);
+    expect(r.total.pvKwh).toBeCloseTo(60 * 366, 6);
+    expect(r.total.selfKwh + r.total.exportKwh + r.total.curtailedKwh).toBeCloseTo(r.total.pvKwh, 6);
+  });
+});

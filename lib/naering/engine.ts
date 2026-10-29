@@ -16,7 +16,7 @@ import type { BuyAgreement, SellAgreement, Taxes, Tariff } from "./tariff";
 import { HOUR, fmtLocal, osloParts } from "./time";
 import { norwegianHolidays } from "./profiles";
 
-export const ENGINE_VERSION = "naering-0.1.0";
+export const ENGINE_VERSION = "naering-0.2.0";
 
 export interface EngineInput {
   load: TimeSeries;
@@ -29,6 +29,8 @@ export interface EngineInput {
   tariff: Tariff;
   taxes: Taxes;
   exportLimitKw?: number | null;
+  /** Invertere(nes) samlede AC-effekt. Solproduksjonen kappes her (null = ukjent, ingen kapping). */
+  inverterAcKw?: number | null;
   /** Analyseperiode [fra, til) i UTC. Standard: hele forbruksserien. */
   fromUtc?: number;
   toUtc?: number;
@@ -43,6 +45,8 @@ export interface MonthResult {
   importKwh: number;
   exportKwh: number;
   curtailedKwh: number;
+  /** Produksjon som går tapt fordi inverteren er mindre enn panelene (kapping) */
+  clippedKwh: number;
   peakKw: number;
   peakAt: string;
   cost: {
@@ -81,6 +85,15 @@ export function rateAt(t: Tariff, d: { year: number; month: number; day: number 
   return r;
 }
 
+/** Elavgift for timen: periodens sats, ellers fast sats. */
+function elRate(taxes: Taxes, d: { year: number; month: number; day: number }) {
+  if (!taxes.periods?.length) return taxes.elavgiftOrePerKwh;
+  const z = (x: number) => String(x).padStart(2, "0");
+  const iso = `${d.year}-${z(d.month)}-${z(d.day)}`;
+  for (const p of taxes.periods) if (p.from <= iso && iso <= p.to) return p.orePerKwh;
+  return taxes.elavgiftOrePerKwh;
+}
+
 function at(s: TimeSeries, t: number): number {
   const i = (t - s.startUtc) / (s.resolutionMin * 60_000);
   return Number.isInteger(i) && i >= 0 && i < s.values.length ? s.values[i] : NaN;
@@ -93,6 +106,7 @@ export function simulate(inp: EngineInput): EngineResult {
   const to = inp.toUtc ?? load.startUtc + load.values.length * HOUR;
   const pvF = inp.pvFactor ?? 1;
   const limitKwh = inp.exportLimitKw == null ? Infinity : inp.exportLimitKw; // per time
+  const acKwh = inp.inverterAcKw == null || inp.inverterAcKw <= 0 ? Infinity : inp.inverterAcKw; // per time
   const months = new Map<string, MonthResult>();
   const holidaysByYear = new Map<number, Set<string>>();
   const daysSeen = new Map<string, Set<number>>();
@@ -101,10 +115,12 @@ export function simulate(inp: EngineInput): EngineResult {
 
   for (let t = from; t < to; t += HOUR) {
     const L = at(load, t);
-    const P = pv ? at(pv, t) * pvF : 0;
+    const Praw = pv ? at(pv, t) * pvF : 0;
+    const P = Math.min(Praw, acKwh);
+    const clip = Praw - P;
     const S = at(spot, t);
     if (!Number.isFinite(L)) throw new Error(`Forbruk mangler ${fmtLocal(t)} – beregnes ikke (ingen stille nullverdier).`);
-    if (!Number.isFinite(P)) throw new Error(`Produksjon mangler ${fmtLocal(t)}.`);
+    if (!Number.isFinite(Praw)) throw new Error(`Produksjon mangler ${fmtLocal(t)}.`);
     if (!Number.isFinite(S)) throw new Error(`Spotpris mangler ${fmtLocal(t)}.`);
 
     const self = Math.min(L, P);
@@ -119,7 +135,7 @@ export function simulate(inp: EngineInput): EngineResult {
     let m = months.get(key);
     if (!m) {
       m = {
-        month: key, days: 0, loadKwh: 0, pvKwh: 0, selfKwh: 0, importKwh: 0, exportKwh: 0, curtailedKwh: 0, peakKw: 0, peakAt: "",
+        month: key, days: 0, loadKwh: 0, pvKwh: 0, selfKwh: 0, importKwh: 0, exportKwh: 0, curtailedKwh: 0, clippedKwh: 0, peakKw: 0, peakAt: "",
         cost: { kraft: 0, kraftGebyr: 0, fastledd: 0, energiledd: 0, effektledd: 0, elavgift: 0, salg: 0, netto: 0 },
       };
       months.set(key, m);
@@ -132,9 +148,10 @@ export function simulate(inp: EngineInput): EngineResult {
     m.importKwh += imp;
     m.exportKwh += exp;
     m.curtailedKwh += curt;
+    m.clippedKwh += clip;
     m.cost.kraft += imp * (S + buy.markupOrePerKwh / 100);
     m.cost.energiledd += (imp * rateAt(tariff, lp).energyOrePerKwh) / 100;
-    m.cost.elavgift += (imp * taxes.elavgiftOrePerKwh) / 100;
+    m.cost.elavgift += (imp * elRate(taxes, lp)) / 100;
     m.cost.salg += exp * (S - sell.deductionOrePerKwh / 100);
 
     const pw = tariff.power;
@@ -181,12 +198,12 @@ export function simulate(inp: EngineInput): EngineResult {
   const list = [...months.values()].sort((a, b) => a.month.localeCompare(b.month));
   const total = list.reduce(
     (acc, m) => {
-      for (const k of ["loadKwh", "pvKwh", "selfKwh", "importKwh", "exportKwh", "curtailedKwh", "days"] as const) acc[k] += m[k];
+      for (const k of ["loadKwh", "pvKwh", "selfKwh", "importKwh", "exportKwh", "curtailedKwh", "clippedKwh", "days"] as const) acc[k] += m[k];
       for (const k of Object.keys(acc.cost) as (keyof MonthResult["cost"])[]) acc.cost[k] += m.cost[k];
       return acc;
     },
     {
-      days: 0, loadKwh: 0, pvKwh: 0, selfKwh: 0, importKwh: 0, exportKwh: 0, curtailedKwh: 0,
+      days: 0, loadKwh: 0, pvKwh: 0, selfKwh: 0, importKwh: 0, exportKwh: 0, curtailedKwh: 0, clippedKwh: 0,
       cost: { kraft: 0, kraftGebyr: 0, fastledd: 0, energiledd: 0, effektledd: 0, elavgift: 0, salg: 0, netto: 0 },
     },
   );

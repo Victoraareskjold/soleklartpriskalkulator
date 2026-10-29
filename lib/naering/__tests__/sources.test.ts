@@ -101,3 +101,38 @@ describe("analyse", () => {
     expect(r.customerSentence).toMatch(/ikke et helt årsresultat/);
   });
 });
+
+describe("runde A: analyse", () => {
+  const base = () => ({
+    project: { name: "T", address: "x", priceArea: "NO1", businessType: "kontor" as const },
+    meteringPoint: { id: "m1", label: "m" },
+    period: { kind: "år" as const, year: 2024 },
+    consumption: { level: 1 as const, type: "kontor" as const, annualKwh: 400_000 },
+    production: fakePv(2024, 100),
+    spot: yearSeries(2024, "pris", () => 0.6),
+    tariff: T, taxes, buy, sell, exportLimitKw: null,
+    weatherYear: 2023,
+    economy: { investmentNok: 1_000_000, years: 30, discountRate: 0.0812, growth: { kraft: 0.035, nettleie: 0.02, avgift: 0, drift: 0.02 }, degradationPerYear: 0.004, opex: [{ name: "Service", nokPerYear: 5000 }], replacements: [] },
+    scenarios: [{ name: "Hoved", kraftGrowth: 0.035 }],
+  });
+
+  test("netto gevinst = lavere energikostnad − løpende kostnader, og = første år i kontantstrømmen", () => {
+    const r = runAnalysis(base());
+    expect(r.historical.net).toBeCloseTo(r.savings.total - 5000, 6);
+    expect(r.economy![0].result.firstYearNet).toBeCloseTo(r.historical.net, 6);
+  });
+
+  test("prisår og værår vises, og feil-avvik gjør resultatet ugyldig", () => {
+    const r = runAnalysis({ ...base(), issues: [{ level: "feil", field: "tariff", message: "x" }] });
+    expect(r.years).toEqual({ price: 2024, weather: 2023 });
+    expect(r.issues.some((i) => /værgrunnlag 2023/.test(i.message))).toBe(true);
+    expect(r.valid).toBe(false);
+  });
+
+  test("tariff-scenario står i kundeteksten", () => {
+    const r = runAnalysis({ ...base(), tariffScenario: true });
+    expect(r.customerSentence).toMatch(/annen periode/);
+    expect(r.basis.find((b) => b.what === "Spotpris")?.sourceType).toBe("markedspriser");
+    expect(r.basis.find((b) => b.what === "Nettleie")?.confirmed).toBe(false);
+  });
+});
