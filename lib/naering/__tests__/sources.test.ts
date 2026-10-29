@@ -1,5 +1,7 @@
 import { describe, expect, test } from "vitest";
-import { parseV53, alignToYear, pvgisUrl } from "../pvgis";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import { parseV53, parseV6, alignToYear, pvgisUrl } from "../pvgis";
 import { buildPriceSeries } from "../prices";
 import { standardProfile } from "../profiles";
 import { runAnalysis } from "../analysis";
@@ -28,6 +30,26 @@ describe("PVGIS", () => {
     const s = { id: "a", kwp: 198, tiltDeg: 15, azimuthDeg: 180, lossPct: 14, meteringPointId: "m" };
     expect(pvgisUrl("v5_3", 62.47, 6.15, s, 2023)).toContain("aspect=0");
     expect(pvgisUrl("v6", 62.47, 6.15, s, 2024)).toContain("surface_orientation=180");
+    expect(pvgisUrl("v6", 62.47, 6.15, s, 2024)).toContain("/api/v6/power/broadband?");
+  });
+
+  // Ekte svar fra /api/v6/power/broadband, 60.88 N 12.01 Ø, 1 kWp, 15° sør, hele 2025 i UTC (hentet 29.10.2026)
+  const v6 = JSON.parse(readFileSync(join(__dirname, "fixtures/pvgis6-power-2025.json"), "utf8"));
+  test("v6: ekte årssvar – 8760 timer, Wh → kWh, 8 manglende timer fylles", () => {
+    const p = parseV6(v6, Date.UTC(2025, 0, 1), 8760);
+    const sum = p.kwh.reduce((a, b) => a + b, 0);
+    expect(sum).toBeGreaterThan(860);
+    expect(sum).toBeLessThan(862); // 860,5 kWh/kWp + fylte timer
+    expect(p.kwh.every((x) => Number.isFinite(x) && x >= 0)).toBe(true);
+    expect(p.notes.join(" ")).toMatch(/8 time\(r\) manglet/);
+    // Natt i januar er 0, middag i juni er størst
+    expect(p.kwh[0]).toBe(0);
+  });
+
+  test("v6: feil lengde eller summesvar fra /performance stopper", () => {
+    expect(() => parseV6(v6, Date.UTC(2025, 0, 1), 8784)).toThrow(/forventet 8784/);
+    expect(() => parseV6({ photovoltaic_performance: { energy: { value: 33.7 } } }, 0)).toThrow(/power/);
+    expect(() => parseV6({ power: Array(100).fill(null) }, 0)).toThrow(/mangler/);
   });
 });
 

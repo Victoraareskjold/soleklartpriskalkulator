@@ -72,7 +72,8 @@ export async function pvgisReference(
   refresh = false,
 ) {
   const r2 = (x: number) => Math.round(x * 100) / 100;
-  const key = `pvgis:${version}:${r2(lat)}:${r2(lon)}:t${Math.round(s.tiltDeg)}:a${Math.round(s.azimuthDeg)}:l${s.lossPct}:${year}`;
+  // v6 hentes fra /power/broadband (eldre mellomlagrede /performance-svar har ingen timeserie)
+  const key = `pvgis:${version === "v6" ? "v6power" : version}:${r2(lat)}:${r2(lon)}:t${Math.round(s.tiltDeg)}:a${Math.round(s.azimuthDeg)}:l${s.lossPct}:${year}`;
   if (!refresh) {
     const [hit] = await sql<{ response: unknown; fetched_at: Date }[]>`select response, fetched_at from calc.source_cache where key = ${key}`;
     if (hit) return { response: hit.response, key, fetchedAt: hit.fetched_at.toISOString(), cached: true };

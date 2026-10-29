@@ -219,7 +219,7 @@ async function production(s: BusinessSettings, opts: RunOptions, analysisId: str
       const ref = await pvgisReference(v, lat, lon, surf, wy, opts.refresh);
       let parsed: ParsedPv;
       try {
-        parsed = v === "v5_3" ? parseV53(ref.response) : parseV6(ref.response, osloLocalToUtc(wy, 1, 1, 0)[0]);
+        parsed = v === "v5_3" ? parseV53(ref.response) : parseV6(ref.response, osloLocalToUtc(wy, 1, 1, 0)[0], (osloLocalToUtc(wy + 1, 1, 1, 0)[0] - osloLocalToUtc(wy, 1, 1, 0)[0]) / HOUR);
       } catch (e) {
         throw new HttpError(502, `Svaret fra PVGIS ${v.replace("_", ".")} kunne ikke tolkes: ${(e as Error).message}`, "SOURCE_FORMAT");
       }

@@ -30,8 +30,9 @@ Uforklart: måler …768 har ~3 200 kr/mnd ekstra nettleie mai–september. Okto
 
 ## Antakelser og begrensninger i trinn 1
 - Standardprofilene er foreløpige parametere (må kvalitetssikres, gjerne mot Elhub-data og målte kunder).
-- PVGIS 6: formatet er ikke verifisert mot et faktisk svar. «auto» prøver v6 for værår etter 2023 og faller tilbake til
-  5.3 (værår 2023, merket «tilpasset») hvis svaret ikke kan tolkes.
+- PVGIS 6: timeserien hentes fra `/api/v6/power/broadband` (`{"power": [Wh per time]}`, verifisert 29.10.2026;
+  `/performance/broadband` gir bare summer). Enkelte timer kan være null og fylles fra nabotimene (maks 48).
+  «auto» bruker v6 for værår etter 2023 og faller tilbake til 5.3 (værår 2023, merket som advarsel) hvis v6 feiler.
 - Prisområde fra adresse foreslås ut fra fylke og må kontrolleres.
 - Filer maks ~4 MB (Vercel-grense for body). Gamle .xls må lagres som .xlsx/.csv. Kvartersforbruk regnes ikke ennå.
 - Ett målepunkt beregnes. Datamodellen har målepunkt-ID på serier og innstillinger for flere.

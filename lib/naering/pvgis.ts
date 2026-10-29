@@ -4,9 +4,10 @@
 //  • v5.3  GET re.jrc.ec.europa.eu/api/v5_3/seriescalc?pvcalculation=1   (værår t.o.m. 2023)
 //      outputs.hourly[].P = effekt i W, time = "YYYYMMDD:HHMM" i UTC (minuttet er en forskyvning
 //      innen timen, ikke intervallstart). Energi i timen = P/1000 kWh.
-//  • v6    GET …/api/v6/performance/broadband   (værår 2014–2025 ifølge Asbjørn/release notes)
-//      Feltnavn og enheter er IKKE verifisert mot et faktisk svar ennå – parseren kontrollerer
-//      seg selv mot svarets egen årssum og nekter å gjette.
+//  • v6    GET …/api/v6/power/broadband   (værår t.o.m. 2025, SARAH-3)
+//      Svar (verifisert 29.10.2026): {"power":[…]} – én verdi per time fra start_time, i Wh per time
+//      for anlegget (peak-power kWp). Ingen tidsstempler; posisjonen i lista er timen. Enkelte timer kan
+//      være null og fylles fra nabotimene. NB: /performance/broadband gir bare summer, ikke timeserie.
 //
 // Retning: vi bruker asimut fra nord (180 = sør). v5 «aspect» = asimut − 180. v6 «surface_orientation» = asimut.
 
@@ -53,11 +54,8 @@ export function pvgisUrl(v: PvgisVersion, lat: number, lon: number, s: RoofSurfa
     end_time: new Date(osloLocalToUtc(year + 1, 1, 1, 0)[0] - 1000).toISOString().slice(0, 19),
     timezone: "UTC",
     frequency: "Hourly",
-    analysis: "Advanced",
-    statistics: "true",
-    angle_output_units: "Degrees",
   });
-  return `https://photovoltaic-geographic-information-system.ec.europa.eu/api/v6/performance/broadband?${q}`;
+  return `https://photovoltaic-geographic-information-system.ec.europa.eu/api/v6/power/broadband?${q}`;
 }
 
 export interface ParsedPv {
@@ -79,24 +77,36 @@ export function parseV53(json: unknown): ParsedPv {
   return { startUtc: start, kwh, notes: ["PVGIS v5.3: P (W) omregnet til kWh per time; tid i UTC."] };
 }
 
-export function parseV6(raw: unknown, requestedStartUtc: number): ParsedPv {
-  type V6 = { photovoltaic_power?: unknown; results?: { photovoltaic_power?: unknown }; photovoltaic_energy?: number | { value?: number } };
-  const json = raw as V6 | null;
-  const p = (json?.photovoltaic_power ?? json?.results?.photovoltaic_power) as number[] | { values?: number[] } | undefined;
-  const arr: number[] | undefined = Array.isArray(p) ? p : Array.isArray(p?.values) ? p.values : undefined;
-  const pe = json?.photovoltaic_energy;
-  if (!arr) throw new Error("PVGIS v6: fant ikke photovoltaic_power i svaret – formatet må kontrolleres");
-  const energyTotal = Number(typeof pe === "object" ? pe?.value : pe);
-  const sumW = arr.reduce((a, b) => a + (Number(b) || 0), 0);
-  const notes = ["PVGIS v6: photovoltaic_power tolket som effekt i W per time (uverifisert)."];
-  // Selvkontroll: hvis svaret oppgir total energi (Wh), må summen av timeeffekter matche.
-  if (Number.isFinite(energyTotal) && energyTotal > 0) {
-    const ratio = sumW / energyTotal;
-    if (Math.abs(ratio - 1) > 0.02 && Math.abs(ratio - 1000) > 20)
-      throw new Error(`PVGIS v6: sum effekt (${sumW.toFixed(0)}) stemmer ikke med oppgitt energi (${energyTotal}). Enhet uklar – stopper.`);
-    notes.push(`Kontrollert mot svarets oppgitte energi (forhold ${ratio.toFixed(3)}).`);
-  } else notes.push("Svaret oppga ikke total energi – enheten er ikke selvkontrollert.");
-  return { startUtc: requestedStartUtc, kwh: Float64Array.from(arr, (w) => Number(w) / 1000), notes };
+/**
+ * PVGIS 6 /power/broadband: {"power": [Wh per time, …]} fra requestedStartUtc.
+ * Manglende timer (null) fylles med snittet av nærmeste kjente nabotimer og telles i notatene.
+ * Stopper hvis lengden ikke stemmer med perioden eller mer enn 48 timer mangler.
+ */
+export function parseV6(raw: unknown, requestedStartUtc: number, expectedHours?: number): ParsedPv {
+  const arr = (raw as { power?: unknown } | null)?.power;
+  if (!Array.isArray(arr) || !arr.length) throw new Error("PVGIS 6: fant ikke «power» i svaret (forventet /power/broadband)");
+  if (expectedHours != null && arr.length !== expectedHours)
+    throw new Error(`PVGIS 6: ${arr.length} timer i svaret, forventet ${expectedHours}. Stopper.`);
+  const kwh = new Float64Array(arr.length);
+  const missing: number[] = [];
+  arr.forEach((v, i) => {
+    const n = typeof v === "number" ? v : NaN;
+    if (!Number.isFinite(n) || n < 0) missing.push(i);
+    kwh[i] = Number.isFinite(n) && n >= 0 ? n / 1000 : NaN;
+  });
+  if (missing.length > 48) throw new Error(`PVGIS 6: ${missing.length} timer mangler i svaret. Stopper.`);
+  for (const i of missing) {
+    let a = i - 1;
+    while (a >= 0 && Number.isNaN(kwh[a])) a--;
+    let b = i + 1;
+    while (b < kwh.length && Number.isNaN(kwh[b])) b++;
+    const va = a >= 0 ? kwh[a] : 0;
+    const vb = b < kwh.length ? kwh[b] : 0;
+    kwh[i] = (va + vb) / 2;
+  }
+  const notes = ["PVGIS 6 (/power/broadband): Wh per time omregnet til kWh; tid i UTC."];
+  if (missing.length) notes.push(`${missing.length} time(r) manglet i PVGIS 6-svaret og er fylt fra nabotimene.`);
+  return { startUtc: requestedStartUtc, kwh, notes };
 }
 
 /**
