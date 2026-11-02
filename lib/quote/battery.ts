@@ -194,6 +194,8 @@ export interface BatteryOfferResult {
     bms: (PriceSteps & { productId: string | null; name: string; overridden: boolean }) | null;
     datasheetUrl: string | null;
     preferred: boolean;
+    /** Tekniske data for næringsanalysen (per modul/enhet) */
+    tech?: { powerKw: number | null; usablePct: number | null; roundTripPct: number | null; lifeYears: number | null };
   }[];
   recommended: { model: string; modules: number } | null;
   warnings: string[];
@@ -419,6 +421,12 @@ export function planBatteryOffer(draft: BatteryOfferDraft | undefined, ctx: Offe
             : null,
         datasheetUrl: p.attachmentUrl,
         preferred: isPreferred(p, ctx.settings.preferences?.battery),
+        tech: {
+          powerKw: num(specs.powerKw) || null,
+          usablePct: num(specs.usablePct) || null,
+          roundTripPct: num(specs.roundTripPct) || null,
+          lifeYears: num(specs.lifeYears) || null,
+        },
       };
     })
     .sort((a, b) => rank(a.productId) - rank(b.productId) || Number(b.preferred) - Number(a.preferred) || a.name.localeCompare(b.name, "nb"));

@@ -24,17 +24,76 @@ export const surfaceSchema = z.object({
   assumed: z.boolean().default(false),
   /** Asimut fra nord: 180 = sør, 90 = øst, 270 = vest */
   azimuthDeg: z.number().min(0).max(360),
+  /** Målepunktet flaten er koblet til (null = hovedmåleren) */
+  meteringPointId: z.string().max(40).nullable().default(null),
+  /** Skyggetap for flaten (%): bygninger, trær o.l. som PVGIS ikke ser. Trekkes fra produksjonen. */
+  shadingPct: z.number().min(0).max(80).default(0),
+});
+
+const hours = z.tuple([hour, hour]).nullable();
+const consumptionSchema = z
+  .object({
+    /** 1 = standardprofil fra årsforbruk, 2 = månedsforbruk, 3 = målte timer/kvarter (aktiv opplastet serie) */
+    level: z.union([z.literal(1), z.literal(2), z.literal(3)]).default(1),
+    annualKwh: z.number().min(0).max(1e9).nullable().default(null),
+    annualKwhStatus: status.default("antatt"),
+    monthlyKwh: z.array(z.number().min(0).max(1e8)).length(12).nullable().default(null),
+    /** Hvor tallet kommer fra (vises i grunnlaget) */
+    source: z.enum(["anslag", "kunde", "faktura", "målefil"]).nullable().default(null),
+  })
+  .prefault({});
+
+/** Andre målepunkter hos kunden (egen tariff og eget forbruk). Avtaler og avgift følger hovedmåleren. */
+export const otherMeterSchema = z.object({
+  id: z.string().min(1).max(40),
+  label: z.string().max(80).default("Måler"),
+  meterId: z.string().max(40).default(""),
+  tariffId: z.uuid().nullable().default(null),
+  tariffConfirmed: z.boolean().default(false),
+  tariffScenario: z.boolean().default(false),
+  exportLimitMode: z.enum(["ukjent", "ingen_grense", "grense", "ingen_eksport"]).default("ukjent"),
+  exportLimitKw: z.number().min(0).max(100_000).nullable().default(null),
+  importLimitKw: z.number().min(0).max(100_000).nullable().default(null),
+  consumption: consumptionSchema,
+});
+
+export const chargerSchema = z.object({
+  label: z.string().max(80).default("Ladepunkt"),
+  count: z.number().int().min(1).max(500).default(1),
+  /** Effekt per ladepunkt (kW) */
+  kw: z.number().min(1).max(1000).default(22),
+  /** Energi per ladepunkt per driftsdag (kWh) */
+  kwhPerDay: z.number().min(0).max(5000).default(30),
+  /** Ladevindu [fra, til) lokal time */
+  window: z.tuple([hour, hour]).default([8, 16]),
+  days: z.enum(["hverdager", "alle"]).default("hverdager"),
 });
 
 export const settingsSchema = z.object({
   businessType: z.enum(BUSINESS_TYPES).default("kontor"),
   /** Driftstid [fra, til) lokal time. null = typisk for virksomhetstypen. */
   openHours: z.tuple([hour, hour]).nullable().default(null),
+  /** Driftstider per dagtype. null = openHours (hverdager) og virksomhetstypens helgefaktor. */
+  schedule: z
+    .object({
+      weekdays: hours.default(null),
+      saturday: hours.default(null),
+      sunday: hours.default(null),
+      /** Måneder med redusert drift (1–12), f.eks. fellesferie i juli: bare grunnlast */
+      closedMonths: z.array(z.number().int().min(1).max(12)).max(12).default([]),
+    })
+    .nullable()
+    .default(null),
   goals: z.array(z.enum(GOALS)).max(5).default(["lavere_regning"]),
   period: z
     .discriminatedUnion("kind", [
       z.object({ kind: z.literal("år"), year }),
       z.object({ kind: z.literal("hittil"), year, toMonth: z.number().int().min(1).max(12), toDay: z.number().int().min(1).max(31) }),
+      /** Egendefinert: fra–til (lokale datoer, inkl.), inntil ett år. year = første år (prisåret som vises). */
+      z
+        .object({ kind: z.literal("egendefinert"), year, from: z.iso.date(), to: z.iso.date() })
+        .refine((p) => p.from <= p.to, "Fra-datoen må være før til-datoen")
+        .refine((p) => (Date.parse(p.to) - Date.parse(p.from)) / 86_400_000 <= 365, "Perioden kan være høyst ett år"),
     ])
     .prefault(() => ({ kind: "år" as const, year: new Date().getFullYear() - 1 })),
   location: z
@@ -47,15 +106,7 @@ export const settingsSchema = z.object({
       priceAreaSource: z.enum(["foreslått", "valgt"]).default("foreslått"),
     })
     .prefault({}),
-  consumption: z
-    .object({
-      /** 1 = standardprofil fra årsforbruk, 2 = månedsforbruk, 3 = målte timer/kvarter (aktiv opplastet serie) */
-      level: z.union([z.literal(1), z.literal(2), z.literal(3)]).default(1),
-      annualKwh: z.number().min(0).max(1e9).nullable().default(null),
-      annualKwhStatus: status.default("antatt"),
-      monthlyKwh: z.array(z.number().min(0).max(1e8)).length(12).nullable().default(null),
-    })
-    .prefault({}),
+  consumption: consumptionSchema,
   production: z
     .object({
       source: z.enum(["pvgis", "fil"]).default("pvgis"),
@@ -77,11 +128,32 @@ export const settingsSchema = z.object({
       tariffConfirmed: z.boolean().default(false),
       /** Tariffen dekker ikke analyseperioden; selger har valgt å bruke den som scenario */
       tariffScenario: z.boolean().default(false),
+      /** ukjent = ikke dokumentert (regnes uten grense, merkes), ingen_grense = bekreftet ubegrenset, grense = exportLimitKw, ingen_eksport = 0 */
+      exportLimitMode: z.enum(["ukjent", "ingen_grense", "grense", "ingen_eksport"]).default("ukjent"),
       exportLimitKw: z.number().min(0).max(100_000).nullable().default(null),
+      /** Største samtidige uttak fra nettet (kW), fra tilknytningen. null = ukjent */
+      importLimitKw: z.number().min(0).max(100_000).nullable().default(null),
       buy: z
-        .object({ markupOrePerKwh: z.number().min(-100).max(500).default(0), monthlyFeeNok: z.number().min(0).max(100_000).default(0), status: status.default("antatt") })
+        .object({
+          type: z.enum(["spot", "fastpris"]).default("spot"),
+          fixedOrePerKwh: z.number().min(-100).max(1000).nullable().default(null),
+          markupOrePerKwh: z.number().min(-100).max(500).default(0),
+          monthlyFeeNok: z.number().min(0).max(100_000).default(0),
+          status: status.default("antatt"),
+        })
         .prefault({}),
-      sell: z.object({ deductionOrePerKwh: z.number().min(-100).max(500).default(0), status: status.default("antatt") }).prefault({}),
+      sell: z
+        .object({
+          type: z.enum(["spot", "fastpris"]).default("spot"),
+          fixedOrePerKwh: z.number().min(-100).max(1000).nullable().default(null),
+          deductionOrePerKwh: z.number().min(-100).max(500).default(0),
+          /** Prisgulv i salgsavtalen (øre/kWh), f.eks. 0. null = ingen */
+          floorOrePerKwh: z.number().min(-100).max(500).nullable().default(null),
+          status: status.default("antatt"),
+        })
+        .prefault({}),
+      /** Kundens avregning: time eller kvarter. Med kvartersdata og «kvarter» regnes det per kvarter. */
+      settlement: z.enum(["time", "kvarter"]).default("time"),
       elavgift: z
         .object({
           /** Egen sats for hele perioden (oppgitt). null = periodens offisielle satser for avgiftsstatusen. */
@@ -90,6 +162,42 @@ export const settingsSchema = z.object({
           status: status.default("antatt"),
         })
         .prefault({}),
+    })
+    .prefault({}),
+  otherMeters: z.array(otherMeterSchema).max(10).default([]),
+  /** Planlagt lading (elbil/maskiner). Legges til forbruket i alle alternativer. */
+  charging: z
+    .object({
+      enabled: z.boolean().default(false),
+      /** Ladingen finnes allerede i forbruksdataene (ikke legg den til på nytt) */
+      inConsumption: z.boolean().default(false),
+      meteringPointId: z.string().max(40).nullable().default(null),
+      chargers: z.array(chargerSchema).max(20).default([]),
+    })
+    .prefault({}),
+  /** Batteri: fra tilbudet (kalkyle eller batteritillegg) eller manuelt. Verdier som er null hentes fra produktdata eller merkes som antatt. */
+  battery: z
+    .object({
+      /** auto = analyser batteriet når tilbudet har det, ja = alltid (manuelle verdier), nei = ikke */
+      include: z.enum(["auto", "ja", "nei"]).default("auto"),
+      capacityKwh: z.number().min(0).max(100_000).nullable().default(null),
+      usablePct: z.number().min(10).max(100).nullable().default(null),
+      powerKw: z.number().min(0).max(100_000).nullable().default(null),
+      /** Utladeeffekt når den er forskjellig fra ladeeffekten. null = lik */
+      dischargeKw: z.number().min(0).max(100_000).nullable().default(null),
+      roundTripPct: z.number().min(50).max(100).nullable().default(null),
+      reservePct: z.number().min(0).max(90).nullable().default(null),
+      auxKw: z.number().min(0).max(1000).default(0),
+      gridCharge: z.boolean().default(true),
+      gridExport: z.boolean().default(false),
+      degradationPct: z.number().min(0).max(10).default(2),
+      lifeYears: z.number().int().min(1).max(40).default(15),
+      investmentNok: z.number().min(0).max(1e10).nullable().default(null),
+      /** Årlig kostnad for smartstyring (kr/år eks. mva.). null = ikke oppgitt (regnes som 0 og merkes) */
+      smartFeeNokPerYear: z.number().min(0).max(1e8).nullable().default(null),
+      smartFeeOnceNok: z.number().min(0).max(1e9).default(0),
+      /** Slitasjekostnad i styringen (øre per kWh utladet). Bare i styringen, ikke en kontantutgift. */
+      wearOrePerKwh: z.number().min(0).max(500).default(10),
     })
     .prefault({}),
   economy: z
@@ -109,6 +217,8 @@ export const settingsSchema = z.object({
       opex: z.array(z.object({ name: z.string().max(80), nokPerYear: z.number().min(0).max(1e8) })).max(20).default([]),
       /** kalkyle = tilbudets inverter × faktor fra Beregningsregler, manuell = replacements, ingen = ikke med */
       replacementSource: z.enum(["kalkyle", "manuell", "ingen"]).default("kalkyle"),
+      /** Kundens fradragsrett for mva.: ja = eks. mva., nei = beløp inkl. 25 % mva., ukjent = eks. mva. (merkes) */
+      vatDeductible: z.enum(["ja", "nei", "ukjent"]).default("ukjent"),
       replacements: z
         .array(z.object({ name: z.string().max(120), year: z.number().int().min(1).max(50), nok: z.number().min(0).max(1e9) }))
         .max(20)

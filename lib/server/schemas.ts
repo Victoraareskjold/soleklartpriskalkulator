@@ -35,6 +35,12 @@ export const specs = z.looseObject({
   batteryClass: z.enum(["HV", "LV"]).optional(),
   capacityKwh: z.number().positive().max(100000).optional(),
   powerKw: z.number().positive().max(100000).optional(),
+  /** Batteri: brukbar andel av nominell kapasitet (%) */
+  usablePct: z.number().min(10).max(100).optional(),
+  /** Batteri: tur-retur-virkningsgrad (%) */
+  roundTripPct: z.number().min(50).max(100).optional(),
+  /** Batteri: forventet levetid (år) */
+  lifeYears: z.number().int().min(1).max(40).optional(),
   derived: z.boolean().optional(),
 });
 

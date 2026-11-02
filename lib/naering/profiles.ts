@@ -33,7 +33,11 @@ export interface ProfileInput {
   annualKwh: number;
   /** Overstyr driftstid */
   openHours?: [number, number];
-  /** Driftsdager, 1=man … 7=søn. Standard man–fre (+ helgefaktor). */
+  /**
+   * Driftstider per dagtype. Satt dag = åpen i tidsrommet (full drift), null = stengt (grunnlast).
+   * Mangler = man–fre åpent (openHours) og virksomhetstypens helgefaktor.
+   */
+  schedule?: { weekdays: [number, number] | null; saturday: [number, number] | null; sunday: [number, number] | null; closedMonths?: number[] } | null;
   /** Datanivå 2: kjent månedsforbruk (12 verdier). Profilen skaleres til hver måned. */
   monthlyKwh?: number[];
 }
@@ -71,11 +75,26 @@ export function standardProfile(input: ProfileInput): TimeSeries {
     const seasonal = 1 + p.season * Math.cos((2 * Math.PI * (doy - 15)) / 365);
     const holiday = holidays.has(`${lp.year}-${z(lp.month)}-${z(lp.day)}`);
     const weekend = lp.weekday >= 6 || holiday;
-    // Myk overgang: 1 time opp- og nedkjøring rundt driftstiden
-    const inOpen = lp.hour >= from && lp.hour < to;
-    const edge = lp.hour === from - 1 || lp.hour === to;
-    let level = inOpen ? 1 : edge ? (1 + p.base) / 2 : p.base;
-    if (weekend) level = p.base + (level - p.base) * p.weekend;
+    let level: number;
+    const sch = input.schedule;
+    if (sch) {
+      // Egne driftstider per dagtype: helligdag regnes som søndag
+      const day = holiday || lp.weekday === 7 ? sch.sunday : lp.weekday === 6 ? sch.saturday : sch.weekdays;
+      if (!day) level = p.base;
+      else {
+        const inOpen = lp.hour >= day[0] && lp.hour < day[1];
+        const edge = lp.hour === day[0] - 1 || lp.hour === day[1];
+        level = inOpen ? 1 : edge ? (1 + p.base) / 2 : p.base;
+      }
+    } else {
+      // Myk overgang: 1 time opp- og nedkjøring rundt driftstiden
+      const inOpen = lp.hour >= from && lp.hour < to;
+      const edge = lp.hour === from - 1 || lp.hour === to;
+      level = inOpen ? 1 : edge ? (1 + p.base) / 2 : p.base;
+      if (weekend) level = p.base + (level - p.base) * p.weekend;
+    }
+    // Måneder med redusert drift (f.eks. fellesferie): bare grunnlast
+    if (input.schedule?.closedMonths?.includes(lp.month)) level = p.base;
     v[i] = level * seasonal;
   }
   // Skaler: årssum eller hver måned
@@ -95,11 +114,55 @@ export function standardProfile(input: ProfileInput): TimeSeries {
     unit: "kWh",
     provenance: {
       status: "antatt",
-      source: `Standardprofil ${p.label.toLowerCase()}, driftstid ${z(from)}–${z(to)}${input.monthlyKwh ? ", skalert til oppgitt månedsforbruk" : ""}`,
+      source: `Standardprofil ${p.label.toLowerCase()}, ${input.schedule ? scheduleText(input.schedule) : `driftstid ${z(from)}–${z(to)}`}${input.monthlyKwh ? ", skalert til oppgitt månedsforbruk" : ""}`,
       period: { from: `${input.year}-01-01`, to: `${input.year}-12-31` },
       note: input.monthlyKwh
         ? "Månedssummer fra kunden, fordeling over døgnet er anslått."
         : `Årsforbruk ${Math.round(input.annualKwh).toLocaleString("nb-NO")} kWh, fordeling over året og døgnet er anslått.`,
+    },
+  };
+}
+
+export function scheduleText(s: NonNullable<ProfileInput["schedule"]>) {
+  const z = (x: number) => String(x).padStart(2, "0");
+  const f = (d: [number, number] | null) => (d ? `${z(d[0])}–${z(d[1])}` : "stengt");
+  const M = ["jan", "feb", "mar", "apr", "mai", "jun", "jul", "aug", "sep", "okt", "nov", "des"];
+  return `hverdager ${f(s.weekdays)}, lørdag ${f(s.saturday)}, søndag/helligdag ${f(s.sunday)}${s.closedMonths?.length ? `, redusert drift ${s.closedMonths.map((m) => M[m - 1]).join("/")}` : ""}`;
+}
+
+/** Ladeprofil: energi per dag fordelt jevnt i ladevinduet, begrenset av ladeeffekten. Antatt. */
+export function chargingProfile(
+  year: number,
+  chargers: { label: string; count: number; kw: number; kwhPerDay: number; window: [number, number]; days: "hverdager" | "alle" }[],
+): TimeSeries {
+  const start = osloLocalToUtc(year, 1, 1, 0)[0];
+  const n = hoursInYear(year);
+  const holidays = norwegianHolidays(year);
+  const z = (x: number) => String(x).padStart(2, "0");
+  const v = new Float64Array(n);
+  for (const c of chargers) {
+    const [a, b] = c.window[1] > c.window[0] ? c.window : [c.window[0], c.window[1] + 24];
+    const hoursOpen = b - a;
+    const perHour = Math.min(c.kw, c.kwhPerDay / Math.max(1, hoursOpen)) * c.count;
+    for (let i = 0; i < n; i++) {
+      const lp = osloParts(start + i * HOUR);
+      const off = lp.weekday >= 6 || holidays.has(`${lp.year}-${z(lp.month)}-${z(lp.day)}`);
+      if (c.days === "hverdager" && off) continue;
+      const h = lp.hour < a && b > 24 ? lp.hour + 24 : lp.hour;
+      if (h >= a && h < b) v[i] += perHour;
+    }
+  }
+  return {
+    kind: "forbruk",
+    startUtc: start,
+    resolutionMin: 60,
+    values: v,
+    unit: "kWh",
+    provenance: {
+      status: "antatt",
+      source: `Ladeprofil: ${chargers.map((c) => `${c.count} × ${c.kw} kW, ${c.kwhPerDay} kWh/dag kl. ${z(c.window[0])}–${z(c.window[1])} (${c.days})`).join("; ")}`,
+      period: { from: `${year}-01-01`, to: `${year}-12-31` },
+      note: "Ladingen er fordelt jevnt i ladevinduet (anslag, ikke målt).",
     },
   };
 }

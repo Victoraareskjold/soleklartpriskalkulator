@@ -54,7 +54,7 @@ export const POST = handler<{ id: string }>(async (req, { id }) => {
     const [calcLead] = await sql<{ lead_id: string | null }[]>`select lead_id from calc.calculations where id = ${id}`;
     if (calcLead?.lead_id && calcLead.lead_id !== analysis.lead_id) throw new HttpError(400, "Næringsanalysen hører til en annen lead", "BAD_REQUEST");
     try {
-      const quote = quoteContext(evaluated.built, result, evaluated.built.rules.settings, input.draft);
+      const quote = quoteContext(evaluated.built, result, evaluated.built.rules.settings, input.draft, evaluated.batteryOffer);
       const prepared = await prepareRun(analysis, { quote });
       const res = execute(prepared);
       // Feil i grunnlaget (f.eks. tariff for feil år uten scenario-merking) → ikke med i tilbudet

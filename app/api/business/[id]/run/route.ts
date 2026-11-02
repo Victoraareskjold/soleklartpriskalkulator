@@ -24,7 +24,7 @@ export const POST = handler<{ id: string }>(async (req, { id }) => {
   const input = await body(req, schema);
   const installer = await requireInstallerAccess(access, analysis.installer_group_id);
   const evaluated = await evaluateDraft(input.draft, installer);
-  const quote = quoteContext(evaluated.built, evaluated.result, evaluated.built.rules.settings, input.draft);
+  const quote = quoteContext(evaluated.built, evaluated.result, evaluated.built.rules.settings, input.draft, evaluated.batteryOffer);
   const prepared = await prepareRun(analysis, { quote, refresh: input.refresh });
   const result = execute(prepared);
   return {

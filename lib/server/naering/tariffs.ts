@@ -73,6 +73,7 @@ export const tariffInputSchema = z.object({
           excludeHolidays: z.boolean(),
         }),
         summerMonths: z.array(z.number().int().min(1).max(12)).max(12),
+        resolution: z.enum(["time", "kvarter"]).default("time"),
         summerNokPerKwMonth: nok,
         winterNokPerKwMonth: nok,
       })

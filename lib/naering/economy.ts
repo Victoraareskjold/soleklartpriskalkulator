@@ -2,7 +2,7 @@
 // Hvert år regnes energiflyten på nytt med degradert produksjon (ikke «førsteår × vekst»),
 // og hver kostnadskomponent får sin egen vekst.
 
-import { simulate, savings, type EngineInput } from "./engine";
+import { simulate, savings, type EngineInput, type EngineResult } from "./engine";
 
 export interface EconomyInput {
   /** null = investeringen er ikke avklart (f.eks. ikke fordelt mellom solceller og batteri) */
@@ -43,13 +43,43 @@ export interface EconomyResult {
 
 export function lifetime(base: { before: EngineInput; after: EngineInput }, e: EconomyInput): EconomyResult {
   const before = simulate(base.before); // uten tiltak: uendret over tid i volum
+  return lifetimeFrom(before, (t) => simulate({ ...base.after, pvFactor: Math.pow(1 - e.degradationPerYear, t - 1) }), e);
+}
+
+type Sav = ReturnType<typeof savings> & { pvKwh: number };
+
+/**
+ * Levetidsøkonomi fra et «før»-resultat og en funksjon som regner energiflyten i år t.
+ * sampleYears: regn bare disse årene og interpoler lineært mellom dem (for tunge beregninger, f.eks. batteristyring).
+ * Første og siste år regnes alltid.
+ */
+export function lifetimeFrom(before: EngineResult, afterAt: (t: number) => EngineResult, e: EconomyInput, sampleYears?: number[]): EconomyResult {
+  const cache = new Map<number, Sav>();
+  const exact = (t: number): Sav => {
+    let s = cache.get(t);
+    if (!s) {
+      const a = afterAt(t);
+      s = { ...savings(before, a), pvKwh: a.total.pvKwh };
+      cache.set(t, s);
+    }
+    return s;
+  };
+  const samples = sampleYears ? [...new Set([1, e.years, ...sampleYears.filter((y) => y >= 1 && y <= e.years)])].sort((a, b) => a - b) : null;
+  const savAt = (t: number): Sav => {
+    if (!samples || samples.includes(t)) return exact(t);
+    const hi = samples.find((y) => y > t)!;
+    const lo = [...samples].reverse().find((y) => y < t)!;
+    const a = exact(lo), b = exact(hi), w = (t - lo) / (hi - lo);
+    const out = {} as Sav;
+    for (const k of Object.keys(a) as (keyof Sav)[]) out[k] = a[k] + (b[k] - a[k]) * w;
+    return out;
+  };
   const rows: YearRow[] = [];
   let acc = e.investmentNok == null ? null : -e.investmentNok;
   let pvOps = 0;
   for (let t = 1; t <= e.years; t++) {
-    const f = Math.pow(1 - e.degradationPerYear, t - 1);
-    const after = simulate({ ...base.after, pvFactor: f });
-    const s = savings(before, after);
+    const s = savAt(t);
+    const after = { total: { pvKwh: s.pvKwh } };
     const gk = Math.pow(1 + e.growth.kraft, t - 1);
     const gn = Math.pow(1 + e.growth.nettleie, t - 1);
     const ga = Math.pow(1 + e.growth.avgift, t - 1);

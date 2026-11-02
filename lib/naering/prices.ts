@@ -24,7 +24,7 @@ export function hvaKosterUrl(area: PriceArea, y: number, m: number, d: number) {
  * Bygger en timeprisserie (NOK/kWh eks. mva.) på UTC-aksen.
  * Kvarterspriser slås sammen til timesnitt – loggføres, fordi forbruket i trinn 1 regnes per time.
  */
-export function buildPriceSeries(rows: HvaKosterRow[], area: PriceArea): { series: TimeSeries; notes: string[] } {
+export function buildPriceSeries(rows: HvaKosterRow[], area: PriceArea): { series: TimeSeries; quarterSeries: TimeSeries | null; notes: string[] } {
   const notes: string[] = [];
   const parsed = rows
     .map((r) => ({ s: Date.parse(r.time_start), e: Date.parse(r.time_end), p: r.NOK_per_kWh }))
@@ -49,9 +49,30 @@ export function buildPriceSeries(rows: HvaKosterRow[], area: PriceArea): { serie
     values[i] = wt[i] >= 59.99 ? sum[i] / wt[i] : NaN;
     if (Number.isNaN(values[i])) holes.push(fmtLocal(start + i * HOUR));
   }
-  if (quarter) notes.push(`${quarter} kvarterspriser er slått sammen til timesnitt (forbruket regnes per time i trinn 1).`);
+  if (quarter) notes.push(`Datakilden leverte ${quarter} kvarterspriser (døgnmarkedet har kvartersoppløsning fra 1.10.2025). De er slått sammen til timesnitt fordi forbruk og effektledd regnes per time; kundens avregning kan være per kvarter.`);
   if (holes.length) notes.push(`${holes.length} timer mangler pris (f.eks. ${holes.slice(0, 2).join(", ")}). Beregningen stopper hvis de trengs.`);
+  // Kvartersserie (for beregning per kvarter): kvarterspriser der kilden har dem, ellers timeprisen gjentatt
+  let quarterSeries: TimeSeries | null = null;
+  if (quarter) {
+    const Q = 15 * MIN;
+    const qn = (end - start) / Q;
+    const qv = new Float64Array(qn).fill(NaN);
+    for (const r of parsed) for (let s = r.s; s < r.e; s += Q) qv[(s - start) / Q] = r.p;
+    quarterSeries = {
+      kind: "pris",
+      startUtc: start,
+      resolutionMin: 15,
+      values: qv,
+      unit: "NOK/kWh",
+      provenance: {
+        status: "målt",
+        source: `Historiske markedspriser ${area} per kvarter der kilden har det (fra 1.10.2025), ellers timepris – hvakosterstrommen.no (ENTSO-E, omregnet til NOK)`,
+        period: { from: fmtLocal(start), to: fmtLocal(end - HOUR) },
+      },
+    };
+  }
   return {
+    quarterSeries,
     series: {
       kind: "pris",
       startUtc: start,

@@ -8,6 +8,8 @@ export interface PowerCharge {
   method: "maks_time_i_vindu";
   window: { weekdays: number[]; fromHour: number; toHour: number; excludeHolidays: boolean };
   summerMonths: number[]; // 1-12
+  /** Måleoppløsning for effektgrunnlaget: høyeste time (standard) eller høyeste kvarter */
+  resolution?: "time" | "kvarter";
   summerNokPerKwMonth: number;
   winterNokPerKwMonth: number;
 }
@@ -58,14 +60,20 @@ export interface Taxes {
 }
 
 export interface BuyAgreement {
-  type: "spot";
+  /** spot = spotpris + påslag, fastpris = fast kraftpris per kWh */
+  type: "spot" | "fastpris";
+  fixedOrePerKwh?: number | null;
   markupOrePerKwh: number;
   monthlyFeeNok: number;
   provenance: Provenance;
 }
 
 export interface SellAgreement {
-  type: "spot";
+  /** spot = spotpris − fradrag, fastpris = fast pris per kWh */
+  type: "spot" | "fastpris";
+  fixedOrePerKwh?: number | null;
+  /** Prisgulv: laveste salgspris (f.eks. 0 = negative priser gir ikke kostnad). null = ingen. */
+  floorOrePerKwh?: number | null;
   /** Fratrekk fra spot (positivt tall = lavere salgspris) */
   deductionOrePerKwh: number;
   provenance: Provenance;

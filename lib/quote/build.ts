@@ -25,6 +25,13 @@ export interface LineMeta {
   capacityKwh?: number | null;
   /** Inverter: AC-effekt (kW) fra produktdata. Brukes til kapping i næringsanalysen. */
   acKw?: number | null;
+  /** Inverter: hybrid (kan styre batteri) */
+  hybrid?: boolean;
+  /** Batteri: effekt (kW), brukbar andel (%), tur-retur-virkningsgrad (%), levetid (år) fra produktdata */
+  powerKw?: number | null;
+  usablePct?: number | null;
+  roundTripPct?: number | null;
+  lifeYears?: number | null;
   workGroup?: string;
   roofTypeName?: string;
   catalogBaseUnit?: string | null;
@@ -102,6 +109,11 @@ export async function buildEngineInput(draft: Draft, installer: { id: string; te
         attachmentUrl: p.attachment_url,
         capacityKwh: typeof p.specs?.capacityKwh === "number" ? p.specs.capacityKwh : null,
         acKw: typeof p.specs?.acKw === "number" ? p.specs.acKw : null,
+        hybrid: p.specs?.hybrid === true,
+        powerKw: typeof p.specs?.powerKw === "number" ? p.specs.powerKw : null,
+        usablePct: typeof p.specs?.usablePct === "number" ? p.specs.usablePct : null,
+        roundTripPct: typeof p.specs?.roundTripPct === "number" ? p.specs.roundTripPct : null,
+        lifeYears: typeof p.specs?.lifeYears === "number" ? p.specs.lifeYears : null,
       });
     } else if (line.sourceId && line.kind === "mount") {
       const m = mounts.find((x) => x.roof_type_id === line.sourceId);
