@@ -25,6 +25,14 @@ export interface OfferAssumptions {
   maintenancePerYear?: number;
   /** Årsforbruk når verken kunden eller leaden har oppgitt det, kWh */
   consumptionFallback?: number;
+  /** Årsforbruk når det mangler = årsproduksjon × faktor. 0 = bruk alltid consumptionFallback */
+  consumptionFactor?: number;
+  /** Nødstrøm på utvalgte kurser: grunnbeløp eks. mva., kr */
+  backupCircuitBaseEx?: number;
+  /** Nødstrøm: tillegg per kurs eks. mva., kr */
+  backupCircuitUnitEx?: number;
+  /** Nødstrøm for hele boligen eks. mva., kr */
+  backupWholeEx?: number;
   /** Perioden tilbudet viser først (10, 20 eller 30 år) */
   periodYears?: number;
   /** Panelenes produktgaranti, år */
