@@ -13,6 +13,8 @@ export interface EconomyInput {
   degradationPerYear: number; // 0.004
   opex: { name: string; nokPerYear: number }[];
   replacements: { name: string; year: number; nok: number }[];
+  /** Inntekter utenfor strømregningen, f.eks. salg av lading til kjøretøy. growth = årlig prisvekst. */
+  revenues?: { name: string; nokPerYear: number; growth: number }[];
 }
 
 export interface YearRow {
@@ -24,6 +26,8 @@ export interface YearRow {
   salg: number;
   drift: number;
   utskifting: number;
+  /** Inntekt fra lading til kjøretøy (og andre inntekter utenfor strømregningen) */
+  ladeinntekt: number;
   netto: number;
   akkumulert: number | null;
   diskontert: number;
@@ -90,11 +94,14 @@ export function lifetimeFrom(before: EngineResult, afterAt: (t: number) => Engin
     const salg = s.salg * gk;
     const drift = e.opex.reduce((a, o) => a + o.nokPerYear, 0) * gd;
     const utskifting = e.replacements.filter((r) => r.year === t).reduce((a, r) => a + r.nok, 0); // nominell utbetaling, ikke indeksert
-    const netto = savedKraft + savedNettleie + savedAvgift + salg - drift - utskifting;
+    const ladeinntekt = (e.revenues ?? []).reduce((a, r) => a + r.nokPerYear * Math.pow(1 + r.growth, t - 1), 0);
+    // Innmatingskreditt følger nettleien
+    const savedInnmating = (s.innmating ?? 0) * gn;
+    const netto = savedKraft + savedNettleie + savedInnmating + savedAvgift + salg + ladeinntekt - drift - utskifting;
     const disc = netto / Math.pow(1 + e.discountRate, t);
     pvOps += disc;
     if (acc != null) acc += netto;
-    rows.push({ year: t, pvKwh: after.total.pvKwh, savedKraft, savedNettleie, savedAvgift, salg, drift, utskifting, netto, akkumulert: acc, diskontert: disc });
+    rows.push({ year: t, pvKwh: after.total.pvKwh, savedKraft, savedNettleie: savedNettleie + savedInnmating, savedAvgift, salg, drift, utskifting, ladeinntekt, netto, akkumulert: acc, diskontert: disc });
   }
 
   const inv = e.investmentNok;

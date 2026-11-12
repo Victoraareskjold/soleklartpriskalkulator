@@ -47,6 +47,26 @@ export interface BatteryInput {
 
 export type AlternativeKey = "sol" | "grunn" | "smart";
 
+/**
+ * Salg av lading til kjøretøy (DC-lader). Regnes som et eget alternativ: tilbudets løsning (med batteri når
+ * tilbudet har det) + laderen, sammenlignet med bygget uten tiltak og uten ny lading.
+ */
+export interface ChargeSaleInput {
+  label: string;
+  /** Ny lading som legges til forbruket (kWh per time). Lading som finnes i forbruksdataene er ikke med her. */
+  series: TimeSeries;
+  /** Solgt til kjøretøy per år etter tiltaket (kWh), inkl. lading som fantes fra før */
+  soldKwhPerYear: number;
+  priceNokPerKwh: number;
+  priceGrowth: number;
+  /** Lading og salg som fantes før tiltaket (kWh/år, kr/kWh) */
+  existingKwh: number;
+  existingPriceNokPerKwh: number;
+  investmentNok: number | null;
+  opexNokPerYear: number;
+  basis: BasisLine[];
+}
+
 export type AnalysisPeriod =
   | { kind: "år"; year: number }
   | { kind: "hittil"; year: number; toMonth: number; toDay: number }
@@ -122,6 +142,10 @@ export interface AnalysisInput {
   /** Andre målepunkter */
   otherMeters?: MeterInput[];
   battery?: BatteryInput | null;
+  /** DC-lader med salg til kjøretøy (eget alternativ) */
+  chargeSale?: ChargeSaleInput | null;
+  /** Årsproduksjonen som brukes og hvor den kommer fra (vises i grunnlaget) */
+  productionInfo?: { annualKwh: number; source: string; pvgisKwh: number | null; scaled: boolean };
   /** 1 = eks. mva., 1,25 = kunden har ikke fradragsrett (kostnader inkl. mva.) */
   vatFactor?: number;
   /** Mva.-linjen i grunnlaget */
@@ -175,6 +199,10 @@ export interface AnalysisResult {
   meters: { id: string; label: string; before: EngineResult["total"]; after: EngineResult["total"]; tariff: string }[];
   /** Lading lagt til forbruket */
   charging: { kwh: number; solarKwh: number; effektleddIncrease: number } | null;
+  /** DC-lader med salg til kjøretøy: eget alternativ */
+  charger: ChargerAnalysis | null;
+  /** Nettleie før og etter per måned for hvert alternativ (hovedmåleren og eventuelle andre målere samlet) */
+  grid: GridAnalysis;
   offerLabel: string;
   /** Avvik: feil gjør resultatet ubrukelig i tilbud, advarsler må vurderes, antakelser er synlige anslag */
   issues: AnalysisIssue[];
@@ -206,6 +234,63 @@ export interface BatteryAnalysis {
   /** Døgnutsnitt fra smartstyringen: dagen med mest batteribruk */
   day: { date: string; hours: { hour: number; price: number; soc: number; battery: number; load: number; pv: number }[] } | null;
   config: BatteryInput["config"] & { degradationPerYear: number; lifeYears: number };
+}
+
+export interface ChargerAnalysis {
+  label: string;
+  /** Alternativet laderen regnes sammen med */
+  base: AlternativeKey;
+  result: EngineResult;
+  savings: ReturnType<typeof savings>;
+  /** Solgt til kjøretøy i perioden (kWh) og inntekten (kr) */
+  soldKwh: number;
+  priceNokPerKwh: number;
+  revenueNok: number;
+  /** Inntekt fra lading som fantes før tiltaket (trekkes fra – bare endringen er gevinst) */
+  existingRevenueNok: number;
+  /** Strømkjøp, nettleie og avgifter: endring mot før tiltaket, uten salg (positiv = høyere kostnad) */
+  costIncreaseNok: number;
+  /** Salg til nettet i alternativet (kWh og kr) */
+  exportKwh: number;
+  exportNok: number;
+  /** Hvor ladingen kom fra */
+  sources: { solarKwh: number; batteryKwh: number; gridKwh: number; gridCostNok: number };
+  opex: number;
+  /** Samlet gevinst i analyseperioden: inntekt + salg til nett − økte kostnader − drift */
+  net: number;
+  investmentNok: number | null;
+  economy: { name: string; kraftGrowth: number; result: EconomyResult }[] | null;
+}
+
+export interface GridMonthRow {
+  month: string;
+  before: GridSide;
+  after: GridSide;
+}
+export interface GridSide {
+  /** Fastledd (inkl. Enova når det kommer i tillegg), energiledd, effektledd/kapasitet, innmating – sum er nettleien */
+  fastledd: number;
+  energiledd: number;
+  effektledd: number;
+  innmating: number;
+  nettleie: number;
+  elavgift: number;
+  salg: number;
+  billedKw: number | null;
+  billedLabel: string;
+  basis: string;
+  versionId: string | null;
+  shiftedFrom: string | null;
+  powerMissing: string | null;
+}
+export interface GridAnalysis {
+  /** Effekttoppene bygger på en anslått profil (bare års-/månedsforbruk) */
+  estimated: boolean;
+  /** Satsene er lånt fra disse årene (anslag) */
+  shiftedFrom: string[];
+  missing: string[];
+  notes: string[];
+  alternatives: { key: AlternativeKey | "lader"; name: string; months: GridMonthRow[] }[];
 }
 
 /** Summerer resultater fra flere målepunkter (måned for måned). Effekttopp = sum av målernes topper. */
@@ -244,6 +329,11 @@ function combine(rs: EngineResult[]): EngineResult {
       maxBalanceErrorKwh: Math.max(...rs.map((r) => r.checks.maxBalanceErrorKwh)),
     },
     hourly: rs.find((r) => r.hourly)?.hourly,
+    tariffNotes: {
+      notes: [...new Set(rs.flatMap((r) => r.tariffNotes.notes))],
+      missing: [...new Set(rs.flatMap((r) => r.tariffNotes.missing))],
+      shiftedFrom: [...new Set(rs.flatMap((r) => r.tariffNotes.shiftedFrom))],
+    },
   };
 }
 
@@ -251,8 +341,8 @@ function combine(rs: EngineResult[]): EngineResult {
 function withVat(r: EngineResult, f: number): EngineResult {
   if (f === 1) return r;
   const scale = (c: MonthResult["cost"]) => {
-    for (const k of ["kraft", "kraftGebyr", "fastledd", "energiledd", "effektledd", "elavgift"] as const) c[k] *= f;
-    c.netto = c.kraft + c.kraftGebyr + c.fastledd + c.energiledd + c.effektledd + c.elavgift - c.salg;
+    for (const k of ["kraft", "kraftGebyr", "fastledd", "energiledd", "effektledd", "elavgift", "innmating"] as const) c[k] *= f;
+    c.netto = c.kraft + c.kraftGebyr + c.fastledd + c.energiledd + c.effektledd + c.elavgift + c.innmating - c.salg;
   };
   r.months.forEach((m) => scale(m.cost));
   scale(r.total.cost);
@@ -331,15 +421,20 @@ export function runAnalysis(inp: AnalysisInput): AnalysisResult {
   // Alle alternativer og år regnes én gang og gjenbrukes i scenarioene
   const cache = new Map<string, EngineResult>();
   const othersCache = new Map<string, EngineResult[]>();
-  const simAll = (alt: "før" | AlternativeKey | "perfekt", t = 1): EngineResult => {
+  const sale = inp.chargeSale ?? null;
+  // Laderen regnes sammen med tilbudets løsning: smart batteristyring når tilbudet har batteri, ellers solceller alene
+  const chargerBase: AlternativeKey = bat ? "smart" : "sol";
+  const simAll = (alt: "før" | AlternativeKey | "perfekt" | "lader", t = 1): EngineResult => {
     const key = `${alt}:${t}`;
     const hit = cache.get(key);
     if (hit) return hit;
+    const batAlt = alt === "lader" ? chargerBase : alt;
     const main = simulate({
       ...common,
       pv: alt === "før" ? null : inp.production,
       pvFactor: pvF(t),
-      battery: alt === "før" || alt === "sol" || !bat ? null : batteryFor(alt, t),
+      battery: batAlt === "før" || batAlt === "sol" || !bat ? null : batteryFor(batAlt, t),
+      charge: alt === "lader" ? sale!.series : null,
     });
     const okey = `${alt === "før" ? "før" : "etter"}:${t}`;
     let os = othersCache.get(okey);
@@ -464,6 +559,107 @@ export function runAnalysis(inp: AnalysisInput): AnalysisResult {
       issues.push({ level: "advarsel", field: "batteri", message: `Uttaket fra nettet er over importgrensen i ${smartRes.total.overImportLimitHours} timer (også uten lading fra nettet). Kontroller tilknytningen.` });
   }
 
+  // ---- DC-lader: tilbudets løsning + lader mot bygget uten tiltak
+  let charger: ChargerAnalysis | null = null;
+  if (sale) {
+    const r = simAll("lader");
+    const sv2 = savings(before, r);
+    const cs = r.total.charging ?? { kwh: 0, solarKwh: 0, batteryKwh: 0, gridKwh: 0, gridCostNok: 0 };
+    // Volum i perioden: ny lading fra serien + lading som fantes (andel av året)
+    const existingKwh = sale.existingKwh * share;
+    const soldKwh = cs.kwh + existingKwh;
+    const revenueNok = soldKwh * sale.priceNokPerKwh;
+    const existingRevenueNok = existingKwh * sale.existingPriceNokPerKwh;
+    const baseAlt = battery?.alternatives.find((a) => a.key === chargerBase);
+    const baseOpex = baseAlt ? baseAlt.opex : opex;
+    const ox = baseOpex + sale.opexNokPerYear * share;
+    const gain = revenueNok - existingRevenueNok;
+    const costIncreaseNok = -(sv2.total - sv2.salg);
+    const baseEco: EconomyInput =
+      chargerBase === "smart" && bat
+        ? (() => {
+            const inv = inp.economy.investmentNok == null || bat.investmentNok == null ? null : inp.economy.investmentNok + bat.investmentNok + bat.smartFeeOnceNok;
+            const repl = [...inp.economy.replacements];
+            if (bat.replacementNok != null && bat.lifeYears > 0)
+              for (let yr = bat.lifeYears + 1; yr <= inp.economy.years; yr += bat.lifeYears) repl.push({ name: `Batteribytte (etter ${bat.lifeYears} år)`, year: yr, nok: bat.replacementNok });
+            const opx = [...inp.economy.opex];
+            if (bat.smartFeeNokPerYear > 0) opx.push({ name: "Smartstyring", nokPerYear: bat.smartFeeNokPerYear });
+            return { ...inp.economy, investmentNok: inv, replacements: repl, opex: opx };
+          })()
+        : inp.economy;
+    const chargerEco: EconomyInput = {
+      ...baseEco,
+      investmentNok: baseEco.investmentNok == null || sale.investmentNok == null ? null : baseEco.investmentNok + sale.investmentNok,
+      opex: sale.opexNokPerYear > 0 ? [...baseEco.opex, { name: "Drift av lader", nokPerYear: sale.opexNokPerYear }] : baseEco.opex,
+      revenues: [{ name: "Ladesalg til kjøretøy", nokPerYear: gain / share, growth: sale.priceGrowth }],
+    };
+    let econ: ChargerAnalysis["economy"] = null;
+    if (fullYear) {
+      const e = chargerEco;
+      econ = inp.scenarios.map((sc) => ({
+        name: sc.name,
+        kraftGrowth: sc.kraftGrowth,
+        result: lifetimeFrom(before, (t) => simAll("lader", t), { ...e, growth: { ...e.growth, kraft: sc.kraftGrowth } }, bat ? [1, 5, 10, 15, 20, 25, 30, 40, bat.lifeYears, bat.lifeYears + 1] : undefined),
+      }));
+    }
+    charger = {
+      label: sale.label,
+      base: chargerBase,
+      result: r,
+      savings: sv2,
+      soldKwh,
+      priceNokPerKwh: sale.priceNokPerKwh,
+      revenueNok,
+      existingRevenueNok,
+      costIncreaseNok,
+      exportKwh: r.total.exportKwh,
+      exportNok: r.total.cost.salg,
+      sources: { solarKwh: cs.solarKwh, batteryKwh: cs.batteryKwh, gridKwh: cs.gridKwh, gridCostNok: cs.gridCostNok * vat },
+      opex: ox,
+      net: sv2.total + gain - ox,
+      investmentNok: chargerEco.investmentNok,
+      economy: econ,
+    };
+    if (sale.investmentNok == null)
+      issues.push({ level: "advarsel", field: "lading", message: "Laderens investering er ikke oppgitt. Nåverdi og tilbakebetaling for alternativet med lader vises ikke." });
+  }
+
+  // ---- nettleie før og etter per måned
+  const side = (m: MonthResult): GridSide => ({
+    fastledd: m.cost.fastledd,
+    energiledd: m.cost.energiledd,
+    effektledd: m.cost.effektledd,
+    innmating: m.cost.innmating,
+    nettleie: m.cost.fastledd + m.cost.energiledd + m.cost.effektledd + m.cost.innmating,
+    elavgift: m.cost.elavgift,
+    salg: m.cost.salg,
+    billedKw: m.grid?.billedKw ?? null,
+    billedLabel: m.grid?.billedLabel ?? "",
+    basis: m.grid?.basis ?? "",
+    versionId: m.grid?.versionId ?? null,
+    shiftedFrom: m.grid?.shiftedFrom ?? null,
+    powerMissing: m.grid?.powerMissing ?? null,
+  });
+  const gridRows = (r: EngineResult): GridMonthRow[] => before.months.map((b, i) => ({ month: b.month, before: side(b), after: side(r.months[i] ?? b) }));
+  const altNames: Record<AlternativeKey, string> = { sol: "Solceller alene", grunn: "Solceller og batteri – grunnstyring", smart: "Solceller og batteri – smart prisstyring" };
+  const gridAlts: GridAnalysis["alternatives"] = [{ key: "sol", name: altNames.sol, months: gridRows(after) }];
+  if (battery) for (const a of battery.alternatives.slice(1)) gridAlts.push({ key: a.key, name: altNames[a.key], months: gridRows(a.result) });
+  if (charger) gridAlts.push({ key: "lader", name: `${chargerBase === "smart" ? "Solceller, batteri" : "Solceller"} og ${charger.label}`, months: gridRows(charger.result) });
+  const allRes = [before, after, ...(battery?.alternatives.map((a) => a.result) ?? []), ...(charger ? [charger.result] : [])];
+  const tn = {
+    notes: [...new Set(allRes.flatMap((r) => r.tariffNotes.notes))],
+    missing: [...new Set(allRes.flatMap((r) => r.tariffNotes.missing))],
+    shiftedFrom: [...new Set(allRes.flatMap((r) => r.tariffNotes.shiftedFrom))],
+  };
+  const grid: GridAnalysis = { estimated: c.level !== 3, shiftedFrom: tn.shiftedFrom, missing: tn.missing, notes: tn.notes, alternatives: gridAlts };
+  for (const m of tn.missing)
+    issues.push({ level: "feil", field: "tariff", message: `Nettleien er en delberegning: ${m} Effektleddet er ikke med før regelen er avklart (eller tariffen er lagt inn fra fakturaen).` });
+  for (const n of tn.notes) issues.push({ level: n.startsWith("Må avklares") ? "advarsel" : "antakelse", field: "tariff", message: n });
+  if (tn.shiftedFrom.length)
+    issues.push({ level: "antakelse", field: "tariff", message: `Anslag basert på ${tn.shiftedFrom.join("/")}-priser: tariffregisteret har ikke satser for analyseperioden.` });
+  if (c.level !== 3 && (inp.tariff.grid || inp.tariff.power))
+    issues.push({ level: "antakelse", field: "tariff", message: "Effekttoppene bygger på en anslått forbruksprofil (bare års- eller månedsforbruk). Besparelsen i effektleddet er anslått." });
+
   // ---- lading
   let charging: AnalysisResult["charging"] = null;
   if (inp.extraLoad) {
@@ -498,10 +694,12 @@ export function runAnalysis(inp: AnalysisInput): AnalysisResult {
     },
     {
       what: "Solproduksjon",
-      value: `${nf(after.total.pvKwh)} kWh`,
+      value: inp.productionInfo
+        ? `${nf(after.total.pvKwh)} kWh i perioden · estimert årsproduksjon brukt i analysen ${nf(inp.productionInfo.annualKwh)} kWh/år`
+        : `${nf(after.total.pvKwh)} kWh`,
       status: "beregnet",
       sourceType: inp.weatherYear == null ? st(inp.production.provenance) : "simulert",
-      source: `${inp.production.provenance.source}${(inp.otherMeters ?? []).some((m) => m.production) ? ` (hovedmåler). Andre målere: ${(inp.otherMeters ?? []).filter((m) => m.production).map((m) => m.production!.provenance.source.replace(/^PVGIS [^,]+, /, "")).join("; ")}` : ""}. ${inp.production.provenance.note ?? ""}`.trim(),
+      source: `${inp.productionInfo ? `${inp.productionInfo.source}. ` : ""}${inp.production.provenance.source}${(inp.otherMeters ?? []).some((m) => m.production) ? ` (hovedmåler). Andre målere: ${(inp.otherMeters ?? []).filter((m) => m.production).map((m) => m.production!.provenance.source.replace(/^PVGIS [^,]+, /, "")).join("; ")}` : ""}. ${inp.production.provenance.note ?? ""}`.trim(),
     },
     {
       what: "Spotpris",
@@ -564,6 +762,7 @@ export function runAnalysis(inp: AnalysisInput): AnalysisResult {
       source: `${m.consumption.level === 3 ? "Målt forbruk" : m.consumption.level === 2 ? "Månedsforbruk, anslått døgnprofil" : "Anslått profil"} · tariff ${m.tariff.validFrom}–${m.tariff.validTo ?? "nå"}`,
     })),
     ...(bat ? bat.basis : []),
+    ...(sale ? sale.basis : []),
   ];
 
   // ---- kontroller som skal være sanne hver gang
@@ -658,6 +857,8 @@ export function runAnalysis(inp: AnalysisInput): AnalysisResult {
         : []),
     ],
     charging,
+    charger,
+    grid,
     offerLabel: inp.offerLabel ?? "Tilbudets solcelleanlegg",
     issues,
     valid: !issues.some((i) => i.level === "feil"),

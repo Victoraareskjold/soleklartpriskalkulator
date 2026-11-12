@@ -8,6 +8,7 @@ import { HttpError } from "@/lib/server/http";
 import { hvaKosterUrl, type HvaKosterRow, type PriceArea } from "@/lib/naering/prices";
 import { pvgisUrl, type PvgisVersion, type RoofSurface } from "@/lib/naering/pvgis";
 import { priceAreaFromCounty } from "@/lib/naering/settings";
+import { gridAreaFrom, namesFromNve, nveIdentifyUrl, type GridAreaResult } from "@/lib/naering/gridarea";
 
 const UA = { "user-agent": "soleklart-kalkulator (naeringsanalyse)" };
 
@@ -119,4 +120,29 @@ export interface GeoHit {
   lon: number;
   municipality: string;
   priceArea: PriceArea | null;
+}
+
+// ---------------------------------------------------------------- adresse → nettselskap
+
+/** Nettselskap for et punkt (NVEs områdekonsesjoner, reserve: kommunen). Mellomlagres per punkt. */
+export async function gridAreaAt(lat: number, lon: number, municipality: string | null, refresh = false): Promise<GridAreaResult> {
+  const r4 = (x: number) => Math.round(x * 10_000) / 10_000;
+  const key = `nettomraade:${r4(lat)}:${r4(lon)}`;
+  if (!refresh) {
+    const [hit] = await sql<{ response: { names: string[] } }[]>`select response from calc.source_cache where key = ${key}`;
+    if (hit) return gridAreaFrom(hit.response.names, municipality, true);
+  }
+  let names: string[] = [];
+  let ok = false;
+  try {
+    const json = await fetchJson(nveIdentifyUrl(lat, lon), "NVEs kart over nettområder", 2);
+    names = namesFromNve(json);
+    ok = json != null;
+    if (ok)
+      await sql`insert into calc.source_cache (key, kind, response) values (${key}, 'nettomraade', ${asJson({ names })})
+        on conflict (key) do update set response = excluded.response, fetched_at = now()`;
+  } catch {
+    ok = false;
+  }
+  return gridAreaFrom(names, municipality, ok);
 }

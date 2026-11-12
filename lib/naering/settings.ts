@@ -31,6 +31,26 @@ export const surfaceSchema = z.object({
 });
 
 const hours = z.tuple([hour, hour]).nullable();
+
+/** Hvordan tariffen er valgt (vises ved tariffen og i grunnlaget). Et manuelt valg beholdes ved ny beregning. */
+const tariffChoice = {
+  /** foreslått = fra adressen, valgt = valgt av selger, faktura = lagt inn fra nettleiefakturaen, egen = egen tariff/scenario */
+  tariffSource: z.enum(["foreslått", "valgt", "faktura", "egen"]).default("valgt"),
+  /** Hvorfor tariffen er foreslått (nettselskap, område, forbruk, tilknytning) */
+  tariffReason: z.string().max(600).nullable().default(null),
+  /** Tilknytningen: avgjør hvilket produkt som foreslås */
+  connection: z
+    .object({
+      level: z.enum(["lavspent", "hoeyspent"]).nullable().default(null),
+      mainFuseA: z.number().min(0).max(10_000).nullable().default(null),
+      voltageV: z.union([z.literal(230), z.literal(400)]).nullable().default(null),
+    })
+    .prefault({}),
+  /** Påstemplet effekt (kW) for avtaler som bruker den (f.eks. utkoblbare avtaler) */
+  contractedKw: z.number().min(0).max(100_000).nullable().default(null),
+  /** Kunden har plusskundeavtale: innmatingens energiledd regnes som kreditt på nettleien */
+  feedIn: z.boolean().default(false),
+};
 const consumptionSchema = z
   .object({
     /** 1 = standardprofil fra årsforbruk, 2 = månedsforbruk, 3 = målte timer/kvarter (aktiv opplastet serie) */
@@ -51,11 +71,46 @@ export const otherMeterSchema = z.object({
   tariffId: z.uuid().nullable().default(null),
   tariffConfirmed: z.boolean().default(false),
   tariffScenario: z.boolean().default(false),
+  ...tariffChoice,
   exportLimitMode: z.enum(["ukjent", "ingen_grense", "grense", "ingen_eksport"]).default("ukjent"),
   exportLimitKw: z.number().min(0).max(100_000).nullable().default(null),
   importLimitKw: z.number().min(0).max(100_000).nullable().default(null),
   consumption: consumptionSchema,
 });
+
+/**
+ * Salg av lading til kjøretøy (DC-lader). Gir et eget alternativ: solceller + batteri + lader.
+ * Volumet oppgis som kWh/år, som andel av samlet forbruk med lading, eller følger profilen (effekt × timer × utnyttelse).
+ */
+export const chargeSaleSchema = z
+  .object({
+    enabled: z.boolean().default(false),
+    label: z.string().max(120).default("DC-lader"),
+    /** Samlet ladeeffekt (kW) for alle uttak */
+    powerKw: z.number().min(1).max(10_000).default(150),
+    outlets: z.number().int().min(1).max(100).default(1),
+    /** kwh = oppgitt kWh/år, prosent = andel av samlet forbruk (bygg + lading), profil = effekt × timer × utnyttelse */
+    volumeMode: z.enum(["kwh", "prosent", "profil"]).default("profil"),
+    volumeKwh: z.number().min(0).max(1e9).nullable().default(null),
+    volumePct: z.number().min(0).max(99).nullable().default(null),
+    /** Ladedager (1 = mandag … 7 = søndag) og vindu [fra, til) lokal time */
+    weekdays: z.array(z.number().int().min(1).max(7)).min(1).max(7).default([1, 2, 3, 4, 5]),
+    window: z.tuple([hour, hour]).default([10, 12]),
+    skipHolidays: z.boolean().default(true),
+    /** Andel av effekten som brukes i ladetimene (%) */
+    utilizationPct: z.number().min(1).max(100).default(100),
+    /** Salgspris til kjøretøy, kr/kWh eks. mva. */
+    priceNokPerKwh: z.number().min(0).max(100).default(3.5),
+    /** Årlig vekst i ladeprisen (%). 0 = fast pris. */
+    priceGrowthPct: z.number().min(-10).max(20).default(0),
+    /** Lading som allerede finnes i forbruksdataene før tiltaket (kWh/år) og prisen den selges for i dag */
+    existingKwh: z.number().min(0).max(1e9).default(0),
+    existingPriceNokPerKwh: z.number().min(0).max(100).nullable().default(null),
+    /** Laderens investering (kr eks. mva.) og driftskostnad per år */
+    investmentNok: z.number().min(0).max(1e10).nullable().default(null),
+    opexNokPerYear: z.number().min(0).max(1e8).default(0),
+  })
+  .prefault({});
 
 export const chargerSchema = z.object({
   label: z.string().max(80).default("Ladepunkt"),
@@ -116,6 +171,20 @@ export const settingsSchema = z.object({
       weatherYear: z.number().int().min(2005).max(2100).nullable().default(null),
       lossPct: z.number().min(0).max(50).default(14),
       surfaces: z.array(surfaceSchema).max(30).default([]),
+      /**
+       * Årsproduksjonen analysen bruker. pvgis = PVGIS-simuleringen som den er, tilbud = årsproduksjonen lagt inn
+       * i tilbudet, manuell = eget tall. Ved tilbud/manuell skaleres timefordelingen fra PVGIS til tallet.
+       */
+      annual: z
+        .object({
+          source: z.enum(["pvgis", "tilbud", "manuell"]).default("pvgis"),
+          kwh: z.number().min(0).max(1e9).nullable().default(null),
+          /** Årsproduksjonen i tilbudet (kWh/år), oppdateres fra estimatet */
+          offerKwh: z.number().min(0).max(1e9).nullable().default(null),
+          /** Tilbudets tall er lagt inn manuelt (ellers solkartets anslag) */
+          offerManual: z.boolean().default(false),
+        })
+        .prefault({}),
     })
     .prefault({}),
   meteringPoint: z
@@ -128,6 +197,7 @@ export const settingsSchema = z.object({
       tariffConfirmed: z.boolean().default(false),
       /** Tariffen dekker ikke analyseperioden; selger har valgt å bruke den som scenario */
       tariffScenario: z.boolean().default(false),
+      ...tariffChoice,
       /** ukjent = ikke dokumentert (regnes uten grense, merkes), ingen_grense = bekreftet ubegrenset, grense = exportLimitKw, ingen_eksport = 0 */
       exportLimitMode: z.enum(["ukjent", "ingen_grense", "grense", "ingen_eksport"]).default("ukjent"),
       exportLimitKw: z.number().min(0).max(100_000).nullable().default(null),
@@ -173,6 +243,8 @@ export const settingsSchema = z.object({
       inConsumption: z.boolean().default(false),
       meteringPointId: z.string().max(40).nullable().default(null),
       chargers: z.array(chargerSchema).max(20).default([]),
+      /** Salg av lading til kjøretøy (DC-lader) som eget alternativ */
+      sale: chargeSaleSchema,
     })
     .prefault({}),
   /** Batteri: fra tilbudet (kalkyle eller batteritillegg) eller manuelt. Verdier som er null hentes fra produktdata eller merkes som antatt. */
@@ -227,6 +299,13 @@ export const settingsSchema = z.object({
         .object({
           /** kalkyle = tilbudets sum eks. mva. for solcelleanlegget (uten batteritillegg) */
           source: z.enum(["kalkyle", "manuell", "uavklart"]).default("kalkyle"),
+          nok: z.number().min(0).max(1e10).nullable().default(null),
+        })
+        .prefault({}),
+      /** Investeringsstøtte (Enova o.l.): tilbud = beløpet registrert i tilbudet, manuell = eget beløp, ingen = uten støtte */
+      support: z
+        .object({
+          source: z.enum(["tilbud", "manuell", "ingen"]).default("tilbud"),
           nok: z.number().min(0).max(1e10).nullable().default(null),
         })
         .prefault({}),

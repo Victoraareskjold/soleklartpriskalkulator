@@ -7,7 +7,10 @@
 //   eksport ≤ eksportgrense (sol kappes først, deretter batteriets salg), import over importgrensen telles.
 // Kostnad:
 //   kraft    = import × (spot + påslag)          + månedsgebyr (forsvinner ikke med solceller)
-//   nettleie = fastledd + import × energiledd + effektledd(maks import i vinduet)
+//   nettleie = fastledd (+ Enova når den kommer i tillegg) + import × energiledd + effektledd etter tariffens regel
+//              (høyeste time, snitt av tre døgnmakser, kapasitetstrinn, blokker – se gridtariff.ts),
+//              regnet på samlet uttak på måleren: bygg + lading + batterilading − sol − batteriutlading
+//   innmating = eksport × innmatingens energiledd (kreditt, bare med plusskundeavtale)
 //   avgift   = import × elavgift                  (også strøm som lades inn i batteriet – vanlig avgiftsplikt)
 //   salg     = eksport × (spot − fratrekk)       (kan bli negativ ved negative priser)
 //
@@ -17,15 +20,17 @@
 import type { TimeSeries } from "./types";
 import type { BuyAgreement, SellAgreement, Taxes, Tariff } from "./tariff";
 import { fmtLocal, osloParts } from "./time";
-import { norwegianHolidays } from "./profiles";
 import { planHorizon, type BatteryConfig } from "./battery";
+import { compileTariff, type MonthGrid } from "./gridtariff";
 
-export const ENGINE_VERSION = "naering-0.3.0";
+export const ENGINE_VERSION = "naering-0.4.0";
 
 export type { BatteryConfig };
 
 export interface EngineInput {
   load: TimeSeries;
+  /** Lading til kjøretøy (kWh per intervall) i tillegg til forbruket. Følges opp separat (kilde og kostnad). */
+  charge?: TimeSeries | null;
   pv?: TimeSeries | null;
   /** Skalering av PV (degradering i år t). 1 = som serien. */
   pvFactor?: number;
@@ -86,6 +91,10 @@ export interface MonthResult {
   /** Timer der uttaket fra nettet er over importgrensen */
   overImportLimitHours: number;
   battery?: BatteryMonth;
+  /** Nettleien for måneden: prisversjon, fakturert effekt/trinn og ledd */
+  grid?: MonthGrid;
+  /** Lading til kjøretøy: levert energi og hvor den kom fra (fordelt forholdsmessig med byggets forbruk i hvert intervall) */
+  charging?: ChargingMonth;
   cost: {
     kraft: number;
     kraftGebyr: number;
@@ -93,21 +102,37 @@ export interface MonthResult {
     energiledd: number;
     effektledd: number;
     elavgift: number;
+    /** Innmatingens energiledd (negativt = kreditt på nettfakturaen) */
+    innmating: number;
     salg: number; // inntekt (positiv)
     netto: number; // sum kostnader − salg
   };
+}
+
+export interface ChargingMonth {
+  kwh: number;
+  /** Dekket direkte av sol */
+  solarKwh: number;
+  /** Dekket av batteriet (kan være sol eller tidligere kjøpt strøm) */
+  batteryKwh: number;
+  /** Kjøpt fra nettet i samme intervall */
+  gridKwh: number;
+  /** Kostnaden for nettkjøpet: kraft + energiledd + elavgift (effektleddet er med i månedens nettleie) */
+  gridCostNok: number;
 }
 
 export interface EngineResult {
   months: MonthResult[];
   total: Omit<MonthResult, "month" | "peakAt" | "days" | "peakKw"> & { days: number };
   checks: { maxBalanceErrorKwh: number; intervals: number; batteryBalanceErrorKwh?: number; endSocKwh?: number; startSocKwh?: number };
+  /** Forbehold fra tariffen: sperrer, antakelser, manglende regler og satser lånt fra et annet år */
+  tariffNotes: { notes: string[]; missing: string[]; shiftedFrom: string[] };
   /** Timeverdier for batteriet (for døgnutsnitt). Bare når batteri er med. */
   /** Per intervall (time eller kvarter): batterinivå (kWh), batterieffekt (kW, + utlading), pris, forbruk og sol (kWh) */
   hourly?: { startUtc: number; stepMin: number; soc: Float64Array; battery: Float64Array; price: Float32Array; load: Float32Array; pv: Float32Array };
 }
 
-/** Gjeldende satser på en lokal dato, inkludert satsendringer midt i året. */
+/** Gjeldende satser på en lokal dato for eldre tariffer, inkludert satsendringer midt i året. */
 export function rateAt(t: Tariff, d: { year: number; month: number; day: number }) {
   const z = (x: number) => String(x).padStart(2, "0");
   const iso = `${d.year}-${z(d.month)}-${z(d.day)}`;
@@ -219,8 +244,9 @@ export function simulate(inp: EngineInput): EngineResult {
   const sharedAc = bat?.sharedAcKw != null && bat.sharedAcKw > 0 ? bat.sharedAcKw * stepH : Infinity;
   const chargeE = bat ? bat.chargeKw * stepH : 0;
   const dischargeE = bat ? bat.dischargeKw * stepH : 0;
-  // Effektleddet måles per time (vanligst) eller per kvarter, etter tariffen
-  const peakPerQuarter = tariff.power?.resolution === "kvarter" && stepMin === 15;
+  const ct = compileTariff(tariff, { contractedKw: tariff.contractedKw ?? null, feedIn: tariff.feedIn ?? false });
+  // Effektleddet måles per klokketime (vanligst) eller per kvarter, etter tariffen
+  const peakPerQuarter = ct.quarterMeasure && stepMin === 15;
   const buyPrice = (s: number) => (buy.type === "fastpris" && buy.fixedOrePerKwh != null ? buy.fixedOrePerKwh / 100 : s + buy.markupOrePerKwh / 100);
   const sellPrice = (s: number) => {
     const p = sell.type === "fastpris" && sell.fixedOrePerKwh != null ? sell.fixedOrePerKwh / 100 : s - sell.deductionOrePerKwh / 100;
@@ -228,17 +254,19 @@ export function simulate(inp: EngineInput): EngineResult {
   };
 
   // ---- forhåndsberegn timeverdier
-  const L = new Float64Array(n), P = new Float64Array(n), clip = new Float64Array(n), S = new Float64Array(n);
-  const buyNok = new Float64Array(n), sellNok = new Float64Array(n), energyNok = new Float64Array(n), elNok = new Float64Array(n);
+  const L = new Float64Array(n), P = new Float64Array(n), clip = new Float64Array(n), S = new Float64Array(n), C = new Float64Array(n);
+  const buyNok = new Float64Array(n), sellNok = new Float64Array(n), energyNok = new Float64Array(n), elNok = new Float64Array(n), exportNok = new Float64Array(n);
+  const dayKey: string[] = new Array(n);
   const win = new Uint8Array(n), monthIdx = new Int32Array(n), hourOfDay = new Int8Array(n), minuteOf = new Int8Array(n);
   const peakRate = new Float64Array(n);
   const monthKeys: string[] = [];
   const monthDays: Set<number>[] = [];
-  const holidaysByYear = new Map<number, Set<string>>();
   const z = (x: number) => String(x).padStart(2, "0");
+  const chg = inp.charge ?? null;
   for (let i = 0; i < n; i++) {
     const t = from + i * STEP;
-    const l = valueAt(load, t, STEP, true);
+    const c = chg ? valueAt(chg, t, STEP, true) : 0;
+    const l = valueAt(load, t, STEP, true) + (Number.isFinite(c) ? c : 0);
     const praw = pv ? valueAt(pv, t, STEP, true) * pvF : 0;
     const s = valueAt(spot, t, STEP, false);
     if (!Number.isFinite(l)) throw new Error(`Forbruk mangler ${fmtLocal(t)} – beregnes ikke (ingen stille nullverdier).`);
@@ -246,6 +274,7 @@ export function simulate(inp: EngineInput): EngineResult {
     if (!Number.isFinite(s)) throw new Error(`Spotpris mangler ${fmtLocal(t)}.`);
     const p = Math.min(praw, acKwh);
     L[i] = l;
+    C[i] = Number.isFinite(c) ? c : 0;
     P[i] = p;
     clip[i] = praw - p;
     S[i] = s;
@@ -260,24 +289,15 @@ export function simulate(inp: EngineInput): EngineResult {
     }
     monthIdx[i] = mi;
     monthDays[mi].add(lp.day);
-    const r = rateAt(tariff, lp);
-    energyNok[i] = r.energyOrePerKwh / 100;
+    dayKey[i] = `${lp.year}-${z(lp.month)}-${z(lp.day)}`;
+    energyNok[i] = ct.energyNok(lp);
+    exportNok[i] = ct.exportNok(lp);
     elNok[i] = elRate(taxes, lp) / 100;
     buyNok[i] = buyPrice(s) + energyNok[i] + elNok[i];
-    sellNok[i] = sellPrice(s);
-    const pw = tariff.power;
-    if (pw) {
-      let hol = holidaysByYear.get(lp.year);
-      if (!hol) holidaysByYear.set(lp.year, (hol = norwegianHolidays(lp.year)));
-      win[i] =
-        pw.window.weekdays.includes(lp.weekday) &&
-        lp.hour >= pw.window.fromHour &&
-        lp.hour < pw.window.toHour &&
-        !(pw.window.excludeHolidays && hol.has(`${lp.year}-${z(lp.month)}-${z(lp.day)}`))
-          ? 1
-          : 0;
-      peakRate[i] = pw.summerMonths.includes(lp.month) ? r.summerNokPerKwMonth : r.winterNokPerKwMonth;
-    }
+    // Innmatingskreditten (negativ sats) gjør salg litt mer verdt for styringen
+    sellNok[i] = sellPrice(s) - exportNok[i];
+    win[i] = ct.inWindow(lp) ? 1 : 0;
+    peakRate[i] = win[i] ? ct.plannerRate(lp) : 0;
   }
 
   // ---- måneder
@@ -286,8 +306,11 @@ export function simulate(inp: EngineInput): EngineResult {
     ...(bat
       ? { battery: { chargeKwh: 0, solarChargeKwh: 0, gridChargeKwh: 0, dischargeKwh: 0, toLoadKwh: 0, toGridKwh: 0, lossKwh: 0, auxKwh: 0, gridChargeCostNok: 0, toGridRevenueNok: 0, cycles: 0 } }
       : {}),
-    cost: { kraft: 0, kraftGebyr: 0, fastledd: 0, energiledd: 0, effektledd: 0, elavgift: 0, salg: 0, netto: 0 },
+    ...(chg ? { charging: { kwh: 0, solarKwh: 0, batteryKwh: 0, gridKwh: 0, gridCostNok: 0 } } : {}),
+    cost: { kraft: 0, kraftGebyr: 0, fastledd: 0, energiledd: 0, effektledd: 0, elavgift: 0, innmating: 0, salg: 0, netto: 0 },
   }));
+  // Høyeste klokketime (eller kvarter) per lokal dato i effektgrunnlaget, per måned
+  const dayMax: Map<string, number>[] = monthKeys.map(() => new Map());
 
   // ---- batteri: tilstand
   const capF = bat ? Math.max(0, Math.min(1, bat.capacityFactor ?? 1)) : 0;
@@ -328,7 +351,7 @@ export function simulate(inp: EngineInput): EngineResult {
         if (i === 0 || (hourOfDay[i] === 13 && minuteOf[i] === 0)) {
           plan = planHorizon(
             {
-              n, i0: i, L, P, aux, buyNok, sellNok, win, peakRate, monthIdx, hourOfDay, minuteOf, stepH,
+              n, i0: i, L, C: chg ? C : undefined, P, aux, buyNok, sellNok, win, peakRate, monthIdx, hourOfDay, minuteOf, stepH,
               curPeak: m.peakKw, eMin, eMax, etaC, etaD, expLim, impLim, sharedAc,
             },
             bat,
@@ -446,22 +469,33 @@ export function simulate(inp: EngineInput): EngineResult {
     m.cost.kraft += f.imp * buyPrice(S[i]);
     m.cost.energiledd += f.imp * energyNok[i];
     m.cost.elavgift += f.imp * elNok[i];
-    m.cost.salg += f.exp * sellNok[i];
+    m.cost.innmating += f.exp * exportNok[i];
+    m.cost.salg += f.exp * sellPrice(S[i]);
+    if (m.charging && C[i] > 0 && Li > 0) {
+      // Ladingen får sin forholdsmessige del av hver kilde i intervallet
+      const share = C[i] / Li;
+      m.charging.kwh += C[i];
+      m.charging.solarKwh += f.direct * share;
+      m.charging.batteryKwh += f.battToLoad * share;
+      m.charging.gridKwh += f.gridToLoad * share;
+      m.charging.gridCostNok += f.gridToLoad * share * buyNok[i];
+    }
+    const markPeak = (kw: number, at: number) => {
+      const dm = dayMax[monthIdx[i]];
+      const k = dayKey[i];
+      if (kw > (dm.get(k) ?? -1)) dm.set(k, kw);
+      if (kw > m.peakKw) {
+        m.peakKw = kw;
+        m.peakAt = fmtLocal(at);
+      }
+    };
     if (win[i]) {
-      if (stepMin === 60 || peakPerQuarter) {
-        const kw = f.imp / stepH;
-        if (kw > m.peakKw) {
-          m.peakKw = kw;
-          m.peakAt = fmtLocal(from + i * STEP);
-        }
-      } else {
-        // Kvartersdata, effekt målt per time: summer timen
+      if (stepMin === 60 || peakPerQuarter) markPeak(f.imp / stepH, from + i * STEP);
+      else {
+        // Kvartersdata, effekt målt per klokketime: summer timen
         hourImp += f.imp;
         if (minuteOf[i] === 45 || i === n - 1) {
-          if (hourImp > m.peakKw) {
-            m.peakKw = hourImp;
-            m.peakAt = fmtLocal(from + (i - 3) * STEP);
-          }
+          markPeak(hourImp, from + (i - 3) * STEP);
           hourImp = 0;
         }
       }
@@ -499,20 +533,15 @@ export function simulate(inp: EngineInput): EngineResult {
     yearDays.set(y, leap ? 366 : 365);
     m.days = monthDays[k].size;
     const fullMonthDays = new Date(Date.UTC(y, +m.month.slice(5), 0)).getUTCDate();
-    m.cost.fastledd =
-      tariff.fixedAllocation === "per_dag"
-        ? (tariff.fixedNokPerYear / yearDays.get(y)!) * m.days
-        : (tariff.fixedNokPerYear / 12) * (m.days / fullMonthDays);
+    // Delmåned (hittil i år): effektledd tas med for påbegynt måned slik nettselskapet fakturerer
+    const g = ct.month({ year: y, month: +m.month.slice(5), daysCovered: m.days, fullDays: fullMonthDays, yearDays: yearDays.get(y)! }, dayMax[k], m.peakKw);
+    m.grid = g;
+    // Enova-påslaget som kommer i tillegg føres sammen med fastleddet (vises separat i grid)
+    m.cost.fastledd = g.fixedNok + g.enovaNok;
     m.cost.kraftGebyr = buy.monthlyFeeNok * (m.days / fullMonthDays);
-    if (tariff.power) {
-      const mon = +m.month.slice(5);
-      const r = rateAt(tariff, { year: y, month: mon, day: 1 });
-      const rate = tariff.power.summerMonths.includes(mon) ? r.summerNokPerKwMonth : r.winterNokPerKwMonth;
-      // Delmåned (hittil i år): effektledd tas med for påbegynt måned slik nettselskapet fakturerer
-      m.cost.effektledd = m.peakKw * rate;
-    }
+    m.cost.effektledd = g.effektNok;
     const c = m.cost;
-    c.netto = c.kraft + c.kraftGebyr + c.fastledd + c.energiledd + c.effektledd + c.elavgift - c.salg;
+    c.netto = c.kraft + c.kraftGebyr + c.fastledd + c.energiledd + c.effektledd + c.elavgift + c.innmating - c.salg;
   }
 
   const list = [...months].sort((a, b) => a.month.localeCompare(b.month));
@@ -524,11 +553,15 @@ export function simulate(inp: EngineInput): EngineResult {
         acc.battery ??= { chargeKwh: 0, solarChargeKwh: 0, gridChargeKwh: 0, dischargeKwh: 0, toLoadKwh: 0, toGridKwh: 0, lossKwh: 0, auxKwh: 0, gridChargeCostNok: 0, toGridRevenueNok: 0, cycles: 0 };
         for (const k of Object.keys(m.battery) as (keyof BatteryMonth)[]) acc.battery[k] += m.battery[k];
       }
+      if (m.charging) {
+        acc.charging ??= { kwh: 0, solarKwh: 0, batteryKwh: 0, gridKwh: 0, gridCostNok: 0 };
+        for (const k of Object.keys(m.charging) as (keyof ChargingMonth)[]) acc.charging[k] += m.charging[k];
+      }
       return acc;
     },
     {
       days: 0, loadKwh: 0, pvKwh: 0, selfKwh: 0, importKwh: 0, exportKwh: 0, curtailedKwh: 0, clippedKwh: 0, overImportLimitHours: 0,
-      cost: { kraft: 0, kraftGebyr: 0, fastledd: 0, energiledd: 0, effektledd: 0, elavgift: 0, salg: 0, netto: 0 },
+      cost: { kraft: 0, kraftGebyr: 0, fastledd: 0, energiledd: 0, effektledd: 0, elavgift: 0, innmating: 0, salg: 0, netto: 0 },
     } as EngineResult["total"],
   );
   return {
@@ -536,6 +569,7 @@ export function simulate(inp: EngineInput): EngineResult {
     total,
     checks: { maxBalanceErrorKwh: maxErr, intervals: n, ...(bat ? { batteryBalanceErrorKwh: batteryBalanceErr, startSocKwh: startSoc, endSocKwh: soc } : {}) },
     hourly,
+    tariffNotes: { notes: [...ct.notes], missing: [...ct.missing], shiftedFrom: [...ct.shifted] },
   };
 }
 
@@ -549,6 +583,8 @@ export function savings(before: EngineResult, after: EngineResult) {
     effektledd: b.effektledd - a.effektledd,
     elavgift: b.elavgift - a.elavgift,
     fastOgGebyr: b.fastledd + b.kraftGebyr - (a.fastledd + a.kraftGebyr), // skal være 0
+    /** Kreditt for innmating (nettleie), separat fra strømsalget */
+    innmating: b.innmating - a.innmating,
     salg: a.salg - b.salg,
     total: b.netto - a.netto,
   };

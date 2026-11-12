@@ -45,6 +45,8 @@ export interface PlanContext {
   n: number;
   i0: number;
   L: Float64Array;
+  /** Planlagt lading til kjøretøy (del av L). Er en kjent timeplan, så styringen bruker den som den er – ikke prognosen. */
+  C?: Float64Array;
   P: Float64Array;
   aux: number;
   buyNok: Float64Array;
@@ -126,7 +128,8 @@ export function planHorizon(c: PlanContext, bat: BatteryConfig, soc0: number): P
   let buySum = 0;
   for (let h = 0; h < H; h++) {
     const s = forecastIndex(c, c.i0 + h, perfect);
-    fn[h] = c.L[s] + c.aux - c.P[s];
+    const known = c.C ? c.C[c.i0 + h] - c.C[s] : 0;
+    fn[h] = c.L[s] + known + c.aux - c.P[s];
     fp[h] = c.P[s];
     buySum += c.buyNok[c.i0 + h];
   }

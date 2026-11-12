@@ -2,6 +2,7 @@
 // Tariffen er data (kan registreres manuelt), regnereglene er kode. Alle beløp eks. mva.
 
 import type { Provenance } from "./types";
+import type { GridTariffDefinition } from "./gridtariff";
 
 export interface PowerCharge {
   /** Effektgrunnlag: høyeste timeforbruk (kWh/h = kW) innenfor vinduet i måneden */
@@ -43,6 +44,15 @@ export interface Tariff {
   maxAnnualKwh?: number | null;
   /** Hva som allerede er inkludert i satsene (f.eks. Enova-påslag i fastleddet) */
   includedNote?: string;
+  /**
+   * Nettariff med datoversjoner (tariffregisteret fra 2026). Når den finnes, brukes den i stedet for
+   * feltene over (som da bare er plassholdere). Se gridtariff.ts.
+   */
+  grid?: GridTariffDefinition;
+  /** Påstemplet effekt (kW) for avtaler som bruker den */
+  contractedKw?: number | null;
+  /** Kunden har plusskundeavtale: innmatingens energiledd regnes som kreditt */
+  feedIn?: boolean;
 }
 
 /** Om tariffens gyldighet dekker hele perioden [fromDay, toDay]. */

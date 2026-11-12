@@ -1,0 +1,280 @@
+{
+  "forutsetninger": "Fiktive kontrolltall, eks. mva. Kun oppgitte fakturalinjer inngår. Oppgitte effekter er klokketimemiddel om ikke annet står. Ikke kundeprognoser.",
+  "eksempler": [
+    {
+      "nummer": 1,
+      "navn": "Tre topper fra ulike dager, ett beløp for trinnet",
+      "produkt": "EL.K",
+      "inndata": {
+        "maaned": "2026-07",
+        "foer_time_kw_gruppert_per_dag": [
+          [
+            28,
+            27.5,
+            27
+          ],
+          [
+            27
+          ],
+          [
+            26
+          ]
+        ],
+        "etter_time_kw_gruppert_per_dag": [
+          [
+            14,
+            13.5,
+            13
+          ],
+          [
+            13
+          ],
+          [
+            12
+          ]
+        ],
+        "oevrige_timers_kw": "under 12"
+      },
+      "forventet": {
+        "foer_maalekw": 27,
+        "etter_maalekw": 13,
+        "foer_kapasitet_kr": 1474.67,
+        "etter_kapasitet_kr": 534.67,
+        "lavere_kapasitetskostnad_kr": 940
+      },
+      "hvorfor": "Enova er inkludert i begge månedsbeløp. Ingen andre kostnader er med i denne deltesten."
+    },
+    {
+      "nummer": 2,
+      "navn": "Stor bedrift: hver kW koster penger, også over 100 kW",
+      "produkt": "GL.L",
+      "inndata": {
+        "omraade": "glitre_tidligere_agder_buskerud_hadeland",
+        "maaned": "2026-10",
+        "maanedsmaks_foer_kw": 400,
+        "maanedsmaks_etter_kw": 200,
+        "samme_maanedsenergi": true
+      },
+      "forventet": {
+        "effekt_foer_kr": 40800,
+        "effekt_etter_kr": 20400,
+        "spart_effekt_kr": 20400,
+        "spart_fastledd_kr": 0
+      },
+      "hvorfor": "Bruk ordinær Glitre-lavspent 102 kr/kW. Ikke bruk småkundenes øverste kapasitetstrinn eller regn denne testen som en prognose for hva et bestemt batteri klarer."
+    },
+    {
+      "nummer": 3,
+      "navn": "To marginale blokker i tidligere Norgesnett-område",
+      "produkt": "GL.L",
+      "inndata": {
+        "omraade": "tidligere_norgesnett_fredrikstad_mfl",
+        "maaned": "2026-01",
+        "snitt_tre_doegnmakser_foer_kw": 400,
+        "etter_kw": 200
+      },
+      "forventet": {
+        "effekt_foer_kr": 26159,
+        "effekt_etter_kr": 13175,
+        "spart_effekt_kr": 12984
+      },
+      "hvorfor": "I januar prises de første 100 kW til 66,83; resten til 64,92 kr/kW. Denne testen passer ikke for Drammen eller for oktober."
+    },
+    {
+      "nummer": 4,
+      "navn": "Hel nettleiefaktura før og etter",
+      "produkt": "LD.L",
+      "inndata": {
+        "maaned": "2026-07",
+        "fastledd_kr_per_mnd": 250,
+        "aarsavregning_enova_for_test": "800 / 12",
+        "elavgift": "ordinær",
+        "mva": "ekskludert",
+        "reaktivt_tillegg": 0,
+        "kwh_foer": 16000,
+        "kwh_etter": 13000,
+        "maks_kw_foer": 200,
+        "maks_kw_etter": 150
+      },
+      "forventet": {
+        "foer_kr": 7991.47,
+        "etter_kr": 6179.07,
+        "spart_kr": 1812.4,
+        "fordeling_spart_kr": {
+          "energi": 105,
+          "effekt": 1493.5,
+          "elavgift": 213.9,
+          "fastledd_og_enova": 0
+        }
+      },
+      "hvorfor": "Kun uttak. I denne testen fordeles årsavgiften likt på 12 måneder; faktisk fakturadeling kan variere. Avrund totalen til slutt."
+    },
+    {
+      "nummer": 5,
+      "navn": "Vevigs månedsvekter",
+      "produkt": "VV.L",
+      "inndata": {
+        "aar": 2026,
+        "januar_og_juli_samme_maks_kw": 100
+      },
+      "forventet": {
+        "effekt_januar_kr": 5557,
+        "effekt_juli_kr": 3334.2
+      },
+      "hvorfor": "55,57 kr/kW/mnd vektes med 1,0 i januar og 0,6 i juli."
+    },
+    {
+      "nummer": 6,
+      "navn": "Hvor havner akkurat 5 kW?",
+      "produkt": [
+        "LD.K",
+        "VV.K"
+      ],
+      "inndata": {
+        "maaned": "2026-05",
+        "fakturert_snitt_kw": [
+          5,
+          5.01
+        ]
+      },
+      "forventet": {
+        "ved_5_kw_kr": {
+          "LD.K": 367,
+          "VV.K": 261
+        },
+        "ved_5_01_kw_VV_K_kr": 363
+      },
+      "hvorfor": "I Lede starter neste trinn ved 5; hos Vevig inkluderer det lavere trinnet 5,00. Ikke del en hardkodet grenseregel på alle nettselskaper."
+    },
+    {
+      "nummer": 7,
+      "navn": "Satsendring gjelder fra riktig dato",
+      "produkt": "LD.K",
+      "inndata": {
+        "datoer": [
+          "2026-04-30",
+          "2026-05-01"
+        ],
+        "kwh_per_dato": 100
+      },
+      "forventet": {
+        "kun_energiledd_kr": [
+          24.38,
+          11.41
+        ],
+        "sum_kr": 35.79
+      },
+      "hvorfor": "Analysen skal selv skifte sats 1. mai. Øvrige ledd holdes utenfor akkurat denne testen."
+    },
+    {
+      "nummer": 8,
+      "navn": "Elavgift i Linjas pristabell",
+      "produkt": "LI.K",
+      "inndata": {
+        "maaned": "2026-07",
+        "day_kwh": 100,
+        "elavgift": "ordinær",
+        "mva": "ekskludert"
+      },
+      "forventet": {
+        "energiledd_uten_elavgift_kr": 22.81,
+        "elavgift_kr": 7.13,
+        "sum_for_energi_og_elavgift_kr": 29.94
+      },
+      "hvorfor": "Enova er på kapasitet, ikke per kjøpt kWh. Med dokumentert redusert avgift ville samme del av fakturaen vært 23,41 kr."
+    },
+    {
+      "nummer": 9,
+      "navn": "Nettlading kan skape ny månedstopp",
+      "produkt": "GL.L",
+      "inndata": {
+        "omraade": "glitre_tidligere_agder_buskerud_hadeland",
+        "maaned": "2026-10",
+        "opprinnelig_maks_kw": 200,
+        "tidligere_topptime_etter_kw": 150,
+        "ny_topptime_ved_nettlading_kw": 200,
+        "andre_timer_lavere": true
+      },
+      "forventet": {
+        "fakturert_kw_etter": 200,
+        "spart_effekt_kr": 0
+      },
+      "hvorfor": "Batteriet kutter den gamle toppen, men ikke den fakturerte toppen. Energikostnaden kan likevel ha endret seg."
+    },
+    {
+      "nummer": 10,
+      "navn": "Kvarter og klokketime er ikke det samme",
+      "produkt": "LD.L",
+      "inndata": {
+        "ett_kvarter_med_lader_kw": 400,
+        "andre_tre_kvarter_kw": 0,
+        "oevrig_last_kw": 0,
+        "innenfor_samme_klokketime": true
+      },
+      "forventet": {
+        "energi_i_timen_kwh": 100,
+        "klokketime_i_effektgrunnlaget_kw": 100
+      },
+      "hvorfor": "På en tariff som måler klokketimer kan 400 kW i 15 minutter gi bare 100 kW i den timen. Månedstoppen kan ligge i en annen time."
+    },
+    {
+      "nummer": 11,
+      "navn": "Flere målere blir ikke ett avregningspunkt",
+      "produkt": "alle",
+      "inndata": {
+        "samtidig_A_eksport_kwh": 10,
+        "samtidig_B_import_kwh": 10,
+        "delingsavtale": false
+      },
+      "forventet": {
+        "fakturert_import_B_kwh": 10,
+        "eksport_A_kwh": 10
+      },
+      "hvorfor": "Ikke trekk eksport på A fra import på B uten en dokumentert delings- og avregningsordning."
+    },
+    {
+      "nummer": 12,
+      "navn": "Sikringsregel i Lede",
+      "produkt": [
+        "LD.K",
+        "LD.L"
+      ],
+      "inndata": {
+        "aarsforbruk_kwh": 250000,
+        "tilknytning": "lavspent",
+        "volt": 230,
+        "hovedsikring_A": [
+          160,
+          200
+        ],
+        "dato": "2026-08-01"
+      },
+      "forventet": {
+        "foreslaatt": [
+          "LD.K",
+          "LD.L"
+        ]
+      },
+      "hvorfor": "Lik 160 A er med i det mindre produktet fra mai; høyere enn 160 A gir effekttariff for denne kunden."
+    },
+    {
+      "nummer": 13,
+      "navn": "Sperre og prognose",
+      "produkt": [
+        "GL.DL",
+        "GL.L"
+      ],
+      "inndata": {
+        "dato_1": "2026-10-01",
+        "kunde_1": "ønsker nattlading, men har ikke meldt seg på døgntariff",
+        "dato_2": "2027-01-01",
+        "kunde_2": "bare tariffark for 2026 finnes"
+      },
+      "forventet": {
+        "kunde_1": "aldri velg GL.DL automatisk",
+        "kunde_2": "ingen bekreftet 2027-pris; eksplisitt anslag eller manglende grunnlag"
+      },
+      "hvorfor": "Test også at en ny prisversjon ikke endrer et tidligere sendt tilbud."
+    }
+  ]
+}

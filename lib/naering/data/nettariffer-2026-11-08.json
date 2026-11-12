@@ -1,0 +1,4715 @@
+{
+  "versjon": "2026-11-08.1",
+  "sjekket_dato": "2026-11-08",
+  "tidssone": "Europe/Oslo",
+  "valuta": "NOK",
+  "dekningsaar_for_uttak": [
+    2026
+  ],
+  "enheter": "Energiledd i øre/kWh uten mva/elavgift, med mindre null og publisert råsats eksplisitt merket. Øre til kr: del på 100. Fastledd og trinn er angitt med original periode og eventuell inkludert Enova. Pris gjelder per målepunkt.",
+  "datokonvensjon": "[dekket_fra, dekket_til_eksklusiv). Dekning er avgrenset til arbeidet med 2026; kan være del av en tariff som opprinnelig gjaldt før 01.01.2026. Null sluttdato = ingen senere versjon funnet per kontrolldato. Det er ikke dokumentasjon på en 2027-pris.",
+  "avgifter_2026": {
+    "aarsversjon": 2026,
+    "kilde": "skatt",
+    "elavgift_ore_per_kwh": {
+      "ordinaer": 7.13,
+      "redusert": 0.6,
+      "dokumentert_fritak": 0
+    },
+    "enova_naering_kr_per_aar_per_maalepunkt": 800,
+    "regel": "Avgiftsstatus per kunde, målepunkt og dato; evt. delvis fritak krever fordelingsgrunnlag. Kontroller mva/fradragsrett. Ikke tell en inkludert avgift to ganger."
+  },
+  "endelig_2027": {
+    "status": "ingen_egne_endelige_2027_prisark_funnet_i_gjennomgangen",
+    "kontrollert_dato": "2026-11-08",
+    "nettselskaper": [
+      "Elvia",
+      "Glitre Nett",
+      "Lede",
+      "Linja",
+      "Nordvest Nett",
+      "Etna Nett",
+      "Vevig",
+      "Fagne"
+    ],
+    "bruk": "Ikke opprett bekreftede 2027-priser fra 2026. Inntil et dokumentert prisgrunnlag er på plass kan siste kjente priser bare brukes som uttrykkelig merket prognose. Lag egen versjon når kilden foreligger."
+  },
+  "nettselskaper": {
+    "EL": "Elvia",
+    "GL": "Glitre Nett",
+    "LD": "Lede",
+    "LI": "Linja",
+    "NV": "Nordvest Nett",
+    "ET": "Etna Nett",
+    "VV": "Vevig",
+    "FA": "Fagne"
+  },
+  "produkter": [
+    {
+      "id": "EL.K",
+      "nettselskap": "Elvia",
+      "navn_i_valg": "Elvia · Mindre bedrift – kapasitetstrinn",
+      "vilkaar": "Forbruk under 100 000 kWh/år per målepunkt; ordinær lavspent",
+      "valgtype": "ordinaer",
+      "forslagsvilkaar": {
+        "maalepunkt_nettomraade": "EL",
+        "krever_dokumentert_spesialavtale": false,
+        "ved_uklar_grense": "bekreft_mot_faktura",
+        "aarsforbruk_kwh": {
+          "lt": 100000
+        }
+      },
+      "versjonsvalg": "nettomraade_og_forbruksdato"
+    },
+    {
+      "id": "EL.L",
+      "nettselskap": "Elvia",
+      "navn_i_valg": "Elvia · Større bedrift – lavspent",
+      "vilkaar": "Forbruk over 100 000 kWh/år per målepunkt og lavspent",
+      "valgtype": "ordinaer",
+      "forslagsvilkaar": {
+        "maalepunkt_nettomraade": "EL",
+        "krever_dokumentert_spesialavtale": false,
+        "ved_uklar_grense": "bekreft_mot_faktura",
+        "aarsforbruk_kwh": {
+          "gt": 100000
+        },
+        "tilknytningsnivaa": "lavspent"
+      },
+      "versjonsvalg": "nettomraade_og_forbruksdato"
+    },
+    {
+      "id": "EL.H",
+      "nettselskap": "Elvia",
+      "navn_i_valg": "Elvia · Bedrift med høyspenttilkobling",
+      "vilkaar": "Ordinær høyspenttilkobling uansett årsforbruk",
+      "valgtype": "ordinaer",
+      "forslagsvilkaar": {
+        "maalepunkt_nettomraade": "EL",
+        "krever_dokumentert_spesialavtale": false,
+        "ved_uklar_grense": "bekreft_mot_faktura",
+        "tilknytningsnivaa": "hoeyspent"
+      },
+      "versjonsvalg": "nettomraade_og_forbruksdato"
+    },
+    {
+      "id": "EL.F",
+      "nettselskap": "Elvia",
+      "navn_i_valg": "Elvia · Fellesmålt anlegg – egen avtale",
+      "vilkaar": "Kun dokumentert fellesmålingsprodukt, ikke bare flere målere",
+      "valgtype": "krever_avtale",
+      "forslagsvilkaar": {
+        "maalepunkt_nettomraade": "EL",
+        "krever_dokumentert_spesialavtale": true,
+        "ved_uklar_grense": "bekreft_mot_faktura"
+      },
+      "versjonsvalg": "nettomraade_og_forbruksdato"
+    },
+    {
+      "id": "GL.K",
+      "nettselskap": "Glitre Nett",
+      "navn_i_valg": "Glitre Nett · Mindre bedrift – kapasitetstrinn",
+      "vilkaar": "Forbruk under 100 000 kWh/år per målepunkt; ordinært uttak",
+      "valgtype": "ordinaer",
+      "forslagsvilkaar": {
+        "maalepunkt_nettomraade": "GL",
+        "krever_dokumentert_spesialavtale": false,
+        "ved_uklar_grense": "bekreft_mot_faktura",
+        "aarsforbruk_kwh": {
+          "lt": 100000
+        }
+      },
+      "versjonsvalg": "nettomraade_og_forbruksdato"
+    },
+    {
+      "id": "GL.L",
+      "nettselskap": "Glitre Nett",
+      "navn_i_valg": "Glitre Nett · Større bedrift – lavspent",
+      "vilkaar": "Forbruk over 100 000 kWh/år per målepunkt og lavspent",
+      "valgtype": "ordinaer",
+      "forslagsvilkaar": {
+        "maalepunkt_nettomraade": "GL",
+        "krever_dokumentert_spesialavtale": false,
+        "ved_uklar_grense": "bekreft_mot_faktura",
+        "aarsforbruk_kwh": {
+          "gt": 100000
+        },
+        "tilknytningsnivaa": "lavspent"
+      },
+      "versjonsvalg": "nettomraade_og_forbruksdato"
+    },
+    {
+      "id": "GL.H",
+      "nettselskap": "Glitre Nett",
+      "navn_i_valg": "Glitre Nett · Bedrift med høyspenttilkobling",
+      "vilkaar": "Bekreftet høyspent. Dagens ordinære Glitre-produkt gjelder også høyspent under 100 000 kWh; ved tilbakeberegning brukes kundegruppe for det historiske området.",
+      "valgtype": "ordinaer",
+      "forslagsvilkaar": {
+        "maalepunkt_nettomraade": "GL",
+        "krever_dokumentert_spesialavtale": false,
+        "ved_uklar_grense": "bekreft_mot_faktura",
+        "tilknytningsnivaa": "hoeyspent"
+      },
+      "versjonsvalg": "nettomraade_og_forbruksdato"
+    },
+    {
+      "id": "GL.DL",
+      "nettselskap": "Glitre Nett",
+      "navn_i_valg": "Glitre Nett · Lavspent – egen dag-/nattavtale",
+      "vilkaar": "Forbruk over 100 000 kWh/år per målepunkt; aktiv påmelding",
+      "valgtype": "krever_avtale",
+      "forslagsvilkaar": {
+        "maalepunkt_nettomraade": "GL",
+        "krever_dokumentert_spesialavtale": true,
+        "ved_uklar_grense": "bekreft_mot_faktura",
+        "aarsforbruk_kwh": {
+          "gt": 100000
+        },
+        "tilknytningsnivaa": "lavspent"
+      },
+      "versjonsvalg": "nettomraade_og_forbruksdato"
+    },
+    {
+      "id": "GL.DH",
+      "nettselskap": "Glitre Nett",
+      "navn_i_valg": "Glitre Nett · Høyspent – egen dag-/nattavtale",
+      "vilkaar": "Forbruk over 100 000 kWh/år per målepunkt; aktiv påmelding",
+      "valgtype": "krever_avtale",
+      "forslagsvilkaar": {
+        "maalepunkt_nettomraade": "GL",
+        "krever_dokumentert_spesialavtale": true,
+        "ved_uklar_grense": "bekreft_mot_faktura",
+        "aarsforbruk_kwh": {
+          "gt": 100000
+        },
+        "tilknytningsnivaa": "hoeyspent"
+      },
+      "versjonsvalg": "nettomraade_og_forbruksdato"
+    },
+    {
+      "id": "LD.K",
+      "nettselskap": "Lede",
+      "navn_i_valg": "Lede · Bedrift – kapasitetstrinn (sjekk hovedsikring)",
+      "vilkaar": "Forbruk under 100 000 kWh/år per målepunkt; brukes også over grensen ved hovedsikring ≤160 A/230 V eller ≤100 A/400 V. Ved likhet: bekreft vilkår for perioden, særlig jan–apr.",
+      "valgtype": "ordinaer",
+      "forslagsvilkaar": {
+        "maalepunkt_nettomraade": "LD",
+        "krever_dokumentert_spesialavtale": false,
+        "ved_uklar_grense": "bekreft_mot_faktura",
+        "aarsforbruk_kwh": {
+          "lt": 100000
+        },
+        "alternativt_vilkaar": "Ved årsforbruk over 100000: hovedsikring ≤160 A ved 230 V eller ≤100 A ved 400 V; bruk versjonens grense."
+      },
+      "versjonsvalg": "nettomraade_og_forbruksdato"
+    },
+    {
+      "id": "LD.L",
+      "nettselskap": "Lede",
+      "navn_i_valg": "Lede · Større bedrift – lavspent og stor hovedsikring",
+      "vilkaar": "Forbruk over 100 000 kWh/år per målepunkt og hovedsikring >160 A ved 230 V eller >100 A ved 400 V",
+      "valgtype": "ordinaer",
+      "forslagsvilkaar": {
+        "maalepunkt_nettomraade": "LD",
+        "krever_dokumentert_spesialavtale": false,
+        "ved_uklar_grense": "bekreft_mot_faktura",
+        "aarsforbruk_kwh": {
+          "gt": 100000
+        },
+        "tilknytningsnivaa": "lavspent",
+        "hovedsikring_stoerre_enn_A_ved_V": {
+          "230": 160,
+          "400": 100
+        }
+      },
+      "versjonsvalg": "nettomraade_og_forbruksdato"
+    },
+    {
+      "id": "LD.H",
+      "nettselskap": "Lede",
+      "navn_i_valg": "Lede · Bedrift med høyspenttilkobling",
+      "vilkaar": "Kunden eier høyspentanlegget og har egen tilknytningsavtale",
+      "valgtype": "ordinaer",
+      "forslagsvilkaar": {
+        "maalepunkt_nettomraade": "LD",
+        "krever_dokumentert_spesialavtale": false,
+        "ved_uklar_grense": "bekreft_mot_faktura",
+        "tilknytningsnivaa": "hoeyspent",
+        "tilleggsvilkaar": "Kunden eier høyspentanlegget og har egen tilknytningsavtale"
+      },
+      "versjonsvalg": "nettomraade_og_forbruksdato"
+    },
+    {
+      "id": "LI.K",
+      "nettselskap": "Linja",
+      "navn_i_valg": "Linja · Mindre bedrift – kapasitetstrinn",
+      "vilkaar": "Forbruk under 100 000 kWh/år per målepunkt",
+      "valgtype": "ordinaer",
+      "forslagsvilkaar": {
+        "maalepunkt_nettomraade": "LI",
+        "krever_dokumentert_spesialavtale": false,
+        "ved_uklar_grense": "bekreft_mot_faktura",
+        "aarsforbruk_kwh": {
+          "lt": 100000
+        }
+      },
+      "versjonsvalg": "nettomraade_og_forbruksdato"
+    },
+    {
+      "id": "LI.L",
+      "nettselskap": "Linja",
+      "navn_i_valg": "Linja · Større bedrift – lavspent",
+      "vilkaar": "Forbruk over 100 000 kWh/år per målepunkt; prioritert lavspent",
+      "valgtype": "ordinaer",
+      "forslagsvilkaar": {
+        "maalepunkt_nettomraade": "LI",
+        "krever_dokumentert_spesialavtale": false,
+        "ved_uklar_grense": "bekreft_mot_faktura",
+        "aarsforbruk_kwh": {
+          "gt": 100000
+        },
+        "tilknytningsnivaa": "lavspent"
+      },
+      "versjonsvalg": "nettomraade_og_forbruksdato"
+    },
+    {
+      "id": "LI.H",
+      "nettselskap": "Linja",
+      "navn_i_valg": "Linja · Bedrift med høyspenttilkobling",
+      "vilkaar": "Forbruk over 100 000 kWh/år per målepunkt; prioritert høyspent",
+      "valgtype": "ordinaer",
+      "forslagsvilkaar": {
+        "maalepunkt_nettomraade": "LI",
+        "krever_dokumentert_spesialavtale": false,
+        "ved_uklar_grense": "bekreft_mot_faktura",
+        "aarsforbruk_kwh": {
+          "gt": 100000
+        },
+        "tilknytningsnivaa": "hoeyspent"
+      },
+      "versjonsvalg": "nettomraade_og_forbruksdato"
+    },
+    {
+      "id": "LI.UL",
+      "nettselskap": "Linja",
+      "navn_i_valg": "Linja · Utkoblbart forbruk – lavspent",
+      "vilkaar": "Skriftlig avtale om utkobling, vilkår som i avtalen",
+      "valgtype": "krever_avtale",
+      "forslagsvilkaar": {
+        "maalepunkt_nettomraade": "LI",
+        "krever_dokumentert_spesialavtale": true,
+        "ved_uklar_grense": "bekreft_mot_faktura",
+        "tilknytningsnivaa": "lavspent"
+      },
+      "versjonsvalg": "nettomraade_og_forbruksdato"
+    },
+    {
+      "id": "LI.UH",
+      "nettselskap": "Linja",
+      "navn_i_valg": "Linja · Utkoblbart forbruk – høyspent",
+      "vilkaar": "Skriftlig avtale om utkobling, vilkår som i avtalen",
+      "valgtype": "krever_avtale",
+      "forslagsvilkaar": {
+        "maalepunkt_nettomraade": "LI",
+        "krever_dokumentert_spesialavtale": true,
+        "ved_uklar_grense": "bekreft_mot_faktura",
+        "tilknytningsnivaa": "hoeyspent"
+      },
+      "versjonsvalg": "nettomraade_og_forbruksdato"
+    },
+    {
+      "id": "NV.K",
+      "nettselskap": "Nordvest Nett",
+      "navn_i_valg": "Nordvest Nett · Mindre bedrift – kapasitetstrinn",
+      "vilkaar": "Forbruk under 100 000 kWh/år per målepunkt",
+      "valgtype": "ordinaer",
+      "forslagsvilkaar": {
+        "maalepunkt_nettomraade": "NV",
+        "krever_dokumentert_spesialavtale": false,
+        "ved_uklar_grense": "bekreft_mot_faktura",
+        "aarsforbruk_kwh": {
+          "lt": 100000
+        }
+      },
+      "versjonsvalg": "nettomraade_og_forbruksdato"
+    },
+    {
+      "id": "NV.L",
+      "nettselskap": "Nordvest Nett",
+      "navn_i_valg": "Nordvest Nett · Større bedrift – lavspent (T3T)",
+      "vilkaar": "Forbruk over 100 000 kWh/år per målepunkt; T3T",
+      "valgtype": "ordinaer",
+      "forslagsvilkaar": {
+        "maalepunkt_nettomraade": "NV",
+        "krever_dokumentert_spesialavtale": false,
+        "ved_uklar_grense": "bekreft_mot_faktura",
+        "aarsforbruk_kwh": {
+          "gt": 100000
+        },
+        "tilknytningsnivaa": "lavspent"
+      },
+      "versjonsvalg": "nettomraade_og_forbruksdato"
+    },
+    {
+      "id": "NV.H",
+      "nettselskap": "Nordvest Nett",
+      "navn_i_valg": "Nordvest Nett · Høyspent 11/22 kV – ordinær (HS2)",
+      "vilkaar": "Ordinær høyspentmåling, 11/22 kV",
+      "valgtype": "ordinaer",
+      "forslagsvilkaar": {
+        "maalepunkt_nettomraade": "NV",
+        "krever_dokumentert_spesialavtale": false,
+        "ved_uklar_grense": "bekreft_mot_faktura",
+        "tilknytningsnivaa": "hoeyspent",
+        "tilleggsvilkaar": "Ordinær høyspentmåling, 11/22 kV"
+      },
+      "versjonsvalg": "nettomraade_og_forbruksdato"
+    },
+    {
+      "id": "NV.T5",
+      "nettselskap": "Nordvest Nett",
+      "navn_i_valg": "Nordvest Nett · Lavspent med momentan utkobling (T5)",
+      "vilkaar": "Avtalt momentan utkobling; oppgi påstemplet effekt",
+      "valgtype": "krever_avtale",
+      "forslagsvilkaar": {
+        "maalepunkt_nettomraade": "NV",
+        "krever_dokumentert_spesialavtale": true,
+        "ved_uklar_grense": "bekreft_mot_faktura",
+        "tilknytningsnivaa": "lavspent"
+      },
+      "versjonsvalg": "nettomraade_og_forbruksdato"
+    },
+    {
+      "id": "NV.T6",
+      "nettselskap": "Nordvest Nett",
+      "navn_i_valg": "Nordvest Nett · Lavspent med to timers varsel (T6)",
+      "vilkaar": "Avtalt utkobling; oppgi påstemplet effekt",
+      "valgtype": "krever_avtale",
+      "forslagsvilkaar": {
+        "maalepunkt_nettomraade": "NV",
+        "krever_dokumentert_spesialavtale": true,
+        "ved_uklar_grense": "bekreft_mot_faktura",
+        "tilknytningsnivaa": "lavspent"
+      },
+      "versjonsvalg": "nettomraade_og_forbruksdato"
+    },
+    {
+      "id": "NV.HS1",
+      "nettselskap": "Nordvest Nett",
+      "navn_i_valg": "Nordvest Nett · Høyspent med utkobling (HS1)",
+      "vilkaar": "Fleksibelt høyspentanlegg 11/22 kV; bekreft avtale",
+      "valgtype": "krever_avtale",
+      "forslagsvilkaar": {
+        "maalepunkt_nettomraade": "NV",
+        "krever_dokumentert_spesialavtale": true,
+        "ved_uklar_grense": "bekreft_mot_faktura",
+        "tilknytningsnivaa": "hoeyspent",
+        "tilleggsvilkaar": "Fleksibelt høyspentanlegg 11/22 kV; bekreft avtale"
+      },
+      "versjonsvalg": "nettomraade_og_forbruksdato"
+    },
+    {
+      "id": "ET.K",
+      "nettselskap": "Etna Nett",
+      "navn_i_valg": "Etna Nett · Mindre bedrift – kapasitetstrinn",
+      "vilkaar": "Forbruk under 100 000 kWh/år per målepunkt",
+      "valgtype": "ordinaer",
+      "forslagsvilkaar": {
+        "maalepunkt_nettomraade": "ET",
+        "krever_dokumentert_spesialavtale": false,
+        "ved_uklar_grense": "bekreft_mot_faktura",
+        "aarsforbruk_kwh": {
+          "lt": 100000
+        }
+      },
+      "versjonsvalg": "nettomraade_og_forbruksdato"
+    },
+    {
+      "id": "ET.S",
+      "nettselskap": "Etna Nett",
+      "navn_i_valg": "Etna Nett · Større bedrift – effekt per måned",
+      "vilkaar": "Forbruk over 100 000 kWh/år per målepunkt; prisarket skiller ikke mellom lavspent og høyspent. Bekreft kunden er på standardproduktet; ikke opprett en separat høyspentpris uten kilde.",
+      "valgtype": "ordinaer",
+      "forslagsvilkaar": {
+        "maalepunkt_nettomraade": "ET",
+        "krever_dokumentert_spesialavtale": false,
+        "ved_uklar_grense": "bekreft_mot_faktura",
+        "aarsforbruk_kwh": {
+          "gt": 100000
+        }
+      },
+      "versjonsvalg": "nettomraade_og_forbruksdato"
+    },
+    {
+      "id": "VV.K",
+      "nettselskap": "Vevig",
+      "navn_i_valg": "Vevig · Mindre bedrift – kapasitetstrinn",
+      "vilkaar": "Forbruk under 100 000 kWh/år per målepunkt",
+      "valgtype": "ordinaer",
+      "forslagsvilkaar": {
+        "maalepunkt_nettomraade": "VV",
+        "krever_dokumentert_spesialavtale": false,
+        "ved_uklar_grense": "bekreft_mot_faktura",
+        "aarsforbruk_kwh": {
+          "lt": 100000
+        }
+      },
+      "versjonsvalg": "nettomraade_og_forbruksdato"
+    },
+    {
+      "id": "VV.L",
+      "nettselskap": "Vevig",
+      "navn_i_valg": "Vevig · Større bedrift – lavspent 230/400 V",
+      "vilkaar": "Forbruk over 100 000 kWh/år per målepunkt; uttak 230/400 V",
+      "valgtype": "ordinaer",
+      "forslagsvilkaar": {
+        "maalepunkt_nettomraade": "VV",
+        "krever_dokumentert_spesialavtale": false,
+        "ved_uklar_grense": "bekreft_mot_faktura",
+        "aarsforbruk_kwh": {
+          "gt": 100000
+        },
+        "tilknytningsnivaa": "lavspent"
+      },
+      "versjonsvalg": "nettomraade_og_forbruksdato"
+    },
+    {
+      "id": "VV.H",
+      "nettselskap": "Vevig",
+      "navn_i_valg": "Vevig · Større bedrift – høyspent 22 kV",
+      "vilkaar": "Forbruk over 100 000 kWh/år per målepunkt; uttak 22 kV",
+      "valgtype": "ordinaer",
+      "forslagsvilkaar": {
+        "maalepunkt_nettomraade": "VV",
+        "krever_dokumentert_spesialavtale": false,
+        "ved_uklar_grense": "bekreft_mot_faktura",
+        "aarsforbruk_kwh": {
+          "gt": 100000
+        },
+        "tilknytningsnivaa": "hoeyspent",
+        "tilleggsvilkaar": "Forbruk over 100 000 kWh/år per målepunkt; uttak 22 kV"
+      },
+      "versjonsvalg": "nettomraade_og_forbruksdato"
+    },
+    {
+      "id": "FA.K",
+      "nettselskap": "Fagne",
+      "navn_i_valg": "Fagne · Mindre bedrift – kapasitetstrinn",
+      "vilkaar": "Forbruk under 100 000 kWh/år per målepunkt",
+      "valgtype": "ordinaer",
+      "forslagsvilkaar": {
+        "maalepunkt_nettomraade": "FA",
+        "krever_dokumentert_spesialavtale": false,
+        "ved_uklar_grense": "bekreft_mot_faktura",
+        "aarsforbruk_kwh": {
+          "lt": 100000
+        }
+      },
+      "versjonsvalg": "nettomraade_og_forbruksdato"
+    },
+    {
+      "id": "FA.L",
+      "nettselskap": "Fagne",
+      "navn_i_valg": "Fagne · Større bedrift – lavspent",
+      "vilkaar": "Forbruk over 100 000 kWh/år per målepunkt; effektmålt lavspent",
+      "valgtype": "ordinaer",
+      "forslagsvilkaar": {
+        "maalepunkt_nettomraade": "FA",
+        "krever_dokumentert_spesialavtale": false,
+        "ved_uklar_grense": "bekreft_mot_faktura",
+        "aarsforbruk_kwh": {
+          "gt": 100000
+        },
+        "tilknytningsnivaa": "lavspent"
+      },
+      "versjonsvalg": "nettomraade_og_forbruksdato"
+    },
+    {
+      "id": "FA.H",
+      "nettselskap": "Fagne",
+      "navn_i_valg": "Fagne · Bedrift med høyspenttilkobling",
+      "vilkaar": "Forbruk over 100 000 kWh/år per målepunkt; effektmålt høyspent",
+      "valgtype": "ordinaer",
+      "forslagsvilkaar": {
+        "maalepunkt_nettomraade": "FA",
+        "krever_dokumentert_spesialavtale": false,
+        "ved_uklar_grense": "bekreft_mot_faktura",
+        "aarsforbruk_kwh": {
+          "gt": 100000
+        },
+        "tilknytningsnivaa": "hoeyspent"
+      },
+      "versjonsvalg": "nettomraade_og_forbruksdato"
+    }
+  ],
+  "uttaksversjoner": [
+    {
+      "produkt": "EL.K",
+      "omraadeversjon": "hele_nettomraadet",
+      "dekket_fra": "2026-01-01",
+      "dekket_til_eksklusiv": "2026-07-01",
+      "kilder": [
+        "el1"
+      ],
+      "status": "kildebelagt",
+      "fastledd": {
+        "kr_per_mnd": 0
+      },
+      "energiledd_uttak": {
+        "modell": "dag_natt",
+        "dag_fra": "06:00",
+        "dag_til_eksklusiv": "22:00",
+        "dag_gjelder": "mandag_fredag_unntatt_helligdager",
+        "dag_ore_per_kwh": 20.99,
+        "ellers_ore_per_kwh": 12.99
+      },
+      "kapasitet_eller_effekt": {
+        "modell": "ett_kapasitetstrinn",
+        "grunnlag": "snitt_av_tre_hoeyeste_doegnmakser_ulike_datoer",
+        "maaleintervall_min": 60,
+        "grenser": "nedre_inklusiv",
+        "trinn": [
+          {
+            "til_kw": 2,
+            "kr_per_mnd": 166.67
+          },
+          {
+            "til_kw": 5,
+            "kr_per_mnd": 218.67
+          },
+          {
+            "til_kw": 10,
+            "kr_per_mnd": 306.67
+          },
+          {
+            "til_kw": 15,
+            "kr_per_mnd": 394.67
+          },
+          {
+            "til_kw": 20,
+            "kr_per_mnd": 482.67
+          },
+          {
+            "til_kw": 25,
+            "kr_per_mnd": 570.67
+          },
+          {
+            "til_kw": 50,
+            "kr_per_mnd": 1006.67
+          },
+          {
+            "til_kw": 75,
+            "kr_per_mnd": 1442.67
+          },
+          {
+            "til_kw": 100,
+            "kr_per_mnd": 1882.67
+          },
+          {
+            "til_kw": null,
+            "kr_per_mnd": 3722.67
+          }
+        ]
+      },
+      "enova_800_per_aar": "inkludert_i_trinn_eller_fastledd",
+      "enova_ekstra_kr_per_aar": 0,
+      "id": "EL.K:hele_nettomraadet:2026-01-01"
+    },
+    {
+      "produkt": "EL.L",
+      "omraadeversjon": "hele_nettomraadet",
+      "dekket_fra": "2026-01-01",
+      "dekket_til_eksklusiv": "2026-07-01",
+      "kilder": [
+        "el1"
+      ],
+      "status": "kildebelagt",
+      "fastledd": {
+        "kr_per_mnd": 500
+      },
+      "energiledd_uttak": {
+        "modell": "lik_hele_doegnet",
+        "ore_per_kwh": 5
+      },
+      "kapasitet_eller_effekt": {
+        "modell": "pris_ganger_kw",
+        "grunnlag": "hoeyeste_klokketime_i_maaneden",
+        "maaleintervall_min": 60,
+        "kr_per_kw_mnd": {
+          "sommermaaneder": [
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ],
+          "sommer": 31,
+          "resten_av_aaret": 74
+        }
+      },
+      "enova_800_per_aar": "inkludert_i_trinn_eller_fastledd",
+      "reaktivt": {
+        "utloeses_ved": "reaktiv kVAr > 0,33 × aktiv kW i dimensjonerende aktive time",
+        "kr_per_kvar_mnd": {
+          "sommermaaneder": [
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ],
+          "sommer": 14,
+          "resten_av_aaret": 33
+        },
+        "bruk": "krever_relevant_maaling",
+        "mengde": "bare overskytende kVAr"
+      },
+      "enova_ekstra_kr_per_aar": 0,
+      "id": "EL.L:hele_nettomraadet:2026-01-01"
+    },
+    {
+      "produkt": "EL.F",
+      "omraadeversjon": "hele_nettomraadet",
+      "dekket_fra": "2026-01-01",
+      "dekket_til_eksklusiv": "2026-07-01",
+      "kilder": [
+        "el1"
+      ],
+      "status": "kildebelagt",
+      "fastledd": {
+        "kr_per_mnd": 1225
+      },
+      "energiledd_uttak": {
+        "modell": "lik_hele_doegnet",
+        "ore_per_kwh": 5
+      },
+      "kapasitet_eller_effekt": {
+        "modell": "pris_ganger_kw",
+        "grunnlag": "hoeyeste_klokketime_i_maaneden",
+        "maaleintervall_min": 60,
+        "kr_per_kw_mnd": {
+          "sommermaaneder": [
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ],
+          "sommer": 31,
+          "resten_av_aaret": 74
+        }
+      },
+      "enova_800_per_aar": "inkludert_i_trinn_eller_fastledd",
+      "reaktivt": {
+        "utloeses_ved": "reaktiv kVAr > 0,33 × aktiv kW i dimensjonerende aktive time",
+        "kr_per_kvar_mnd": {
+          "sommermaaneder": [
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ],
+          "sommer": 14,
+          "resten_av_aaret": 33
+        },
+        "bruk": "krever_relevant_maaling",
+        "mengde": "bare overskytende kVAr"
+      },
+      "enova_ekstra_kr_per_aar": 0,
+      "id": "EL.F:hele_nettomraadet:2026-01-01"
+    },
+    {
+      "produkt": "EL.H",
+      "omraadeversjon": "hele_nettomraadet",
+      "dekket_fra": "2026-01-01",
+      "dekket_til_eksklusiv": "2026-07-01",
+      "kilder": [
+        "el1"
+      ],
+      "status": "kildebelagt",
+      "fastledd": {
+        "kr_per_mnd": 900
+      },
+      "energiledd_uttak": {
+        "modell": "lik_hele_doegnet",
+        "ore_per_kwh": 3
+      },
+      "kapasitet_eller_effekt": {
+        "modell": "pris_ganger_kw",
+        "grunnlag": "hoeyeste_klokketime_i_maaneden",
+        "maaleintervall_min": 60,
+        "kr_per_kw_mnd": {
+          "sommermaaneder": [
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ],
+          "sommer": 26,
+          "resten_av_aaret": 61
+        }
+      },
+      "enova_800_per_aar": "inkludert_i_trinn_eller_fastledd",
+      "reaktivt": {
+        "utloeses_ved": "reaktiv kVAr > 0,33 × aktiv kW i dimensjonerende aktive time",
+        "kr_per_kvar_mnd": {
+          "sommermaaneder": [
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ],
+          "sommer": 12,
+          "resten_av_aaret": 28
+        },
+        "bruk": "krever_relevant_maaling",
+        "mengde": "bare overskytende kVAr"
+      },
+      "enova_ekstra_kr_per_aar": 0,
+      "id": "EL.H:hele_nettomraadet:2026-01-01"
+    },
+    {
+      "produkt": "EL.K",
+      "omraadeversjon": "hele_nettomraadet",
+      "dekket_fra": "2026-07-01",
+      "dekket_til_eksklusiv": null,
+      "kilder": [
+        "el7k"
+      ],
+      "status": "kildebelagt",
+      "fastledd": {
+        "kr_per_mnd": 0
+      },
+      "energiledd_uttak": {
+        "modell": "dag_natt",
+        "dag_fra": "06:00",
+        "dag_til_eksklusiv": "22:00",
+        "dag_gjelder": "mandag_fredag_unntatt_helligdager",
+        "dag_ore_per_kwh": 28.99,
+        "ellers_ore_per_kwh": 16.99
+      },
+      "kapasitet_eller_effekt": {
+        "modell": "ett_kapasitetstrinn",
+        "grunnlag": "snitt_av_tre_hoeyeste_doegnmakser_ulike_datoer",
+        "maaleintervall_min": 60,
+        "grenser": "nedre_inklusiv",
+        "trinn": [
+          {
+            "til_kw": 2,
+            "kr_per_mnd": 186.67
+          },
+          {
+            "til_kw": 5,
+            "kr_per_mnd": 266.67
+          },
+          {
+            "til_kw": 10,
+            "kr_per_mnd": 402.67
+          },
+          {
+            "til_kw": 15,
+            "kr_per_mnd": 534.67
+          },
+          {
+            "til_kw": 20,
+            "kr_per_mnd": 670.67
+          },
+          {
+            "til_kw": 25,
+            "kr_per_mnd": 806.67
+          },
+          {
+            "til_kw": 50,
+            "kr_per_mnd": 1474.67
+          },
+          {
+            "til_kw": 75,
+            "kr_per_mnd": 2146.67
+          },
+          {
+            "til_kw": 100,
+            "kr_per_mnd": 2818.67
+          },
+          {
+            "til_kw": null,
+            "kr_per_mnd": 5506.67
+          }
+        ]
+      },
+      "enova_800_per_aar": "inkludert_i_trinn_eller_fastledd",
+      "enova_ekstra_kr_per_aar": 0,
+      "id": "EL.K:hele_nettomraadet:2026-07-01"
+    },
+    {
+      "produkt": "EL.L",
+      "omraadeversjon": "hele_nettomraadet",
+      "dekket_fra": "2026-07-01",
+      "dekket_til_eksklusiv": null,
+      "kilder": [
+        "el7l"
+      ],
+      "status": "kildebelagt",
+      "fastledd": {
+        "kr_per_mnd": 500
+      },
+      "energiledd_uttak": {
+        "modell": "lik_hele_doegnet",
+        "ore_per_kwh": 5
+      },
+      "kapasitet_eller_effekt": {
+        "modell": "pris_ganger_kw",
+        "grunnlag": "hoeyeste_klokketime_i_maaneden",
+        "maaleintervall_min": 60,
+        "kr_per_kw_mnd": {
+          "sommermaaneder": [
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ],
+          "sommer": 46,
+          "resten_av_aaret": 111
+        }
+      },
+      "enova_800_per_aar": "inkludert_i_trinn_eller_fastledd",
+      "reaktivt": {
+        "utloeses_ved": "reaktiv kVAr > 0,33 × aktiv kW i dimensjonerende aktive time",
+        "kr_per_kvar_mnd": {
+          "sommermaaneder": [
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ],
+          "sommer": 21,
+          "resten_av_aaret": 50
+        },
+        "bruk": "krever_relevant_maaling",
+        "mengde": "bare overskytende kVAr"
+      },
+      "enova_ekstra_kr_per_aar": 0,
+      "id": "EL.L:hele_nettomraadet:2026-07-01"
+    },
+    {
+      "produkt": "EL.F",
+      "omraadeversjon": "hele_nettomraadet",
+      "dekket_fra": "2026-07-01",
+      "dekket_til_eksklusiv": null,
+      "kilder": [
+        "el7l"
+      ],
+      "status": "kildebelagt",
+      "fastledd": {
+        "kr_per_mnd": 1225
+      },
+      "energiledd_uttak": {
+        "modell": "lik_hele_doegnet",
+        "ore_per_kwh": 5
+      },
+      "kapasitet_eller_effekt": {
+        "modell": "pris_ganger_kw",
+        "grunnlag": "hoeyeste_klokketime_i_maaneden",
+        "maaleintervall_min": 60,
+        "kr_per_kw_mnd": {
+          "sommermaaneder": [
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ],
+          "sommer": 46,
+          "resten_av_aaret": 111
+        }
+      },
+      "enova_800_per_aar": "inkludert_i_trinn_eller_fastledd",
+      "reaktivt": {
+        "utloeses_ved": "reaktiv kVAr > 0,33 × aktiv kW i dimensjonerende aktive time",
+        "kr_per_kvar_mnd": {
+          "sommermaaneder": [
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ],
+          "sommer": 21,
+          "resten_av_aaret": 50
+        },
+        "bruk": "krever_relevant_maaling",
+        "mengde": "bare overskytende kVAr"
+      },
+      "enova_ekstra_kr_per_aar": 0,
+      "id": "EL.F:hele_nettomraadet:2026-07-01"
+    },
+    {
+      "produkt": "EL.H",
+      "omraadeversjon": "hele_nettomraadet",
+      "dekket_fra": "2026-07-01",
+      "dekket_til_eksklusiv": null,
+      "kilder": [
+        "el7h"
+      ],
+      "status": "kildebelagt",
+      "fastledd": {
+        "kr_per_mnd": 900
+      },
+      "energiledd_uttak": {
+        "modell": "lik_hele_doegnet",
+        "ore_per_kwh": 3
+      },
+      "kapasitet_eller_effekt": {
+        "modell": "pris_ganger_kw",
+        "grunnlag": "hoeyeste_klokketime_i_maaneden",
+        "maaleintervall_min": 60,
+        "kr_per_kw_mnd": {
+          "sommermaaneder": [
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ],
+          "sommer": 39,
+          "resten_av_aaret": 91
+        }
+      },
+      "enova_800_per_aar": "inkludert_i_trinn_eller_fastledd",
+      "reaktivt": {
+        "utloeses_ved": "reaktiv kVAr > 0,33 × aktiv kW i dimensjonerende aktive time",
+        "kr_per_kvar_mnd": {
+          "sommermaaneder": [
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ],
+          "sommer": 18,
+          "resten_av_aaret": 41
+        },
+        "bruk": "krever_relevant_maaling",
+        "mengde": "bare overskytende kVAr"
+      },
+      "enova_ekstra_kr_per_aar": 0,
+      "id": "EL.H:hele_nettomraadet:2026-07-01"
+    },
+    {
+      "produkt": "GL.K",
+      "omraadeversjon": "glitre_tidligere_agder_buskerud_hadeland",
+      "dekket_fra": "2026-01-01",
+      "dekket_til_eksklusiv": "2026-07-01",
+      "kilder": [
+        "gark",
+        "gk"
+      ],
+      "status": "kildebelagt",
+      "fastledd": {
+        "kr_per_mnd": 0
+      },
+      "energiledd_uttak": {
+        "modell": "dag_natt",
+        "dag_fra": "06:00",
+        "dag_til_eksklusiv": "22:00",
+        "dag_gjelder": "alle_dager",
+        "dag_ore_per_kwh": 24.6,
+        "ellers_ore_per_kwh": 12.6
+      },
+      "kapasitet_eller_effekt": {
+        "modell": "ett_kapasitetstrinn",
+        "grunnlag": "snitt_av_tre_hoeyeste_doegnmakser_ulike_datoer",
+        "maaleintervall_min": 60,
+        "grenser": "nedre_inklusiv",
+        "trinn": [
+          {
+            "til_kw": 2,
+            "kr_per_mnd": 128
+          },
+          {
+            "til_kw": 5,
+            "kr_per_mnd": 164
+          },
+          {
+            "til_kw": 10,
+            "kr_per_mnd": 280
+          },
+          {
+            "til_kw": 15,
+            "kr_per_mnd": 580
+          },
+          {
+            "til_kw": 20,
+            "kr_per_mnd": 752
+          },
+          {
+            "til_kw": 25,
+            "kr_per_mnd": 944
+          },
+          {
+            "til_kw": 50,
+            "kr_per_mnd": 1460
+          },
+          {
+            "til_kw": 75,
+            "kr_per_mnd": 2312
+          },
+          {
+            "til_kw": 100,
+            "kr_per_mnd": 3080
+          },
+          {
+            "til_kw": null,
+            "kr_per_mnd": 5000
+          }
+        ]
+      },
+      "enova_800_per_aar": "kommer_i_tillegg",
+      "id": "GL.K:glitre_tidligere_agder_buskerud_hadeland:2026-01-01"
+    },
+    {
+      "produkt": "GL.K",
+      "omraadeversjon": "glitre_tidligere_agder_buskerud_hadeland",
+      "dekket_fra": "2026-07-01",
+      "dekket_til_eksklusiv": "2026-10-01",
+      "kilder": [
+        "gark",
+        "gk"
+      ],
+      "status": "kildebelagt",
+      "fastledd": {
+        "kr_per_mnd": 0
+      },
+      "energiledd_uttak": {
+        "modell": "dag_natt",
+        "dag_fra": "06:00",
+        "dag_til_eksklusiv": "22:00",
+        "dag_gjelder": "alle_dager",
+        "dag_ore_per_kwh": 25.6,
+        "ellers_ore_per_kwh": 13.6
+      },
+      "kapasitet_eller_effekt": {
+        "modell": "ett_kapasitetstrinn",
+        "grunnlag": "snitt_av_tre_hoeyeste_doegnmakser_ulike_datoer",
+        "maaleintervall_min": 60,
+        "grenser": "nedre_inklusiv",
+        "trinn": [
+          {
+            "til_kw": 2,
+            "kr_per_mnd": 128
+          },
+          {
+            "til_kw": 5,
+            "kr_per_mnd": 186
+          },
+          {
+            "til_kw": 10,
+            "kr_per_mnd": 312
+          },
+          {
+            "til_kw": 15,
+            "kr_per_mnd": 584
+          },
+          {
+            "til_kw": 20,
+            "kr_per_mnd": 772
+          },
+          {
+            "til_kw": 25,
+            "kr_per_mnd": 968
+          },
+          {
+            "til_kw": 50,
+            "kr_per_mnd": 1508
+          },
+          {
+            "til_kw": 75,
+            "kr_per_mnd": 2392
+          },
+          {
+            "til_kw": 100,
+            "kr_per_mnd": 3192
+          },
+          {
+            "til_kw": null,
+            "kr_per_mnd": 5332
+          }
+        ]
+      },
+      "enova_800_per_aar": "kommer_i_tillegg",
+      "id": "GL.K:glitre_tidligere_agder_buskerud_hadeland:2026-07-01"
+    },
+    {
+      "produkt": "GL.K",
+      "omraadeversjon": "glitre_tidligere_agder_buskerud_hadeland",
+      "dekket_fra": "2026-10-01",
+      "dekket_til_eksklusiv": null,
+      "kilder": [
+        "gk"
+      ],
+      "status": "kildebelagt",
+      "fastledd": {
+        "kr_per_mnd": 0
+      },
+      "energiledd_uttak": {
+        "modell": "dag_natt",
+        "dag_fra": "06:00",
+        "dag_til_eksklusiv": "22:00",
+        "dag_gjelder": "alle_dager",
+        "dag_ore_per_kwh": 27.87,
+        "ellers_ore_per_kwh": 15.87
+      },
+      "kapasitet_eller_effekt": {
+        "modell": "ett_kapasitetstrinn",
+        "grunnlag": "snitt_av_tre_hoeyeste_doegnmakser_ulike_datoer",
+        "maaleintervall_min": 60,
+        "grenser": "nedre_inklusiv",
+        "trinn": [
+          {
+            "til_kw": 2,
+            "kr_per_mnd": 132
+          },
+          {
+            "til_kw": 5,
+            "kr_per_mnd": 216
+          },
+          {
+            "til_kw": 10,
+            "kr_per_mnd": 364
+          },
+          {
+            "til_kw": 15,
+            "kr_per_mnd": 612
+          },
+          {
+            "til_kw": 20,
+            "kr_per_mnd": 820
+          },
+          {
+            "til_kw": 25,
+            "kr_per_mnd": 1020
+          },
+          {
+            "til_kw": 50,
+            "kr_per_mnd": 1650
+          },
+          {
+            "til_kw": 75,
+            "kr_per_mnd": 2460
+          },
+          {
+            "til_kw": 100,
+            "kr_per_mnd": 3284
+          },
+          {
+            "til_kw": null,
+            "kr_per_mnd": 5752
+          }
+        ]
+      },
+      "enova_800_per_aar": "kommer_i_tillegg",
+      "id": "GL.K:glitre_tidligere_agder_buskerud_hadeland:2026-10-01"
+    },
+    {
+      "produkt": "GL.K",
+      "omraadeversjon": "tidligere_norgesnett_fredrikstad_mfl",
+      "dekket_fra": "2026-10-01",
+      "dekket_til_eksklusiv": null,
+      "kilder": [
+        "gk"
+      ],
+      "status": "kildebelagt",
+      "fastledd": {
+        "kr_per_mnd": 0
+      },
+      "energiledd_uttak": {
+        "modell": "dag_natt",
+        "dag_fra": "06:00",
+        "dag_til_eksklusiv": "22:00",
+        "dag_gjelder": "alle_dager",
+        "dag_ore_per_kwh": 27.87,
+        "ellers_ore_per_kwh": 15.87
+      },
+      "kapasitet_eller_effekt": {
+        "modell": "ett_kapasitetstrinn",
+        "grunnlag": "snitt_av_tre_hoeyeste_doegnmakser_ulike_datoer",
+        "maaleintervall_min": 60,
+        "grenser": "nedre_inklusiv",
+        "trinn": [
+          {
+            "til_kw": 2,
+            "kr_per_mnd": 132
+          },
+          {
+            "til_kw": 5,
+            "kr_per_mnd": 216
+          },
+          {
+            "til_kw": 10,
+            "kr_per_mnd": 364
+          },
+          {
+            "til_kw": 15,
+            "kr_per_mnd": 612
+          },
+          {
+            "til_kw": 20,
+            "kr_per_mnd": 820
+          },
+          {
+            "til_kw": 25,
+            "kr_per_mnd": 1020
+          },
+          {
+            "til_kw": 50,
+            "kr_per_mnd": 1650
+          },
+          {
+            "til_kw": 75,
+            "kr_per_mnd": 2460
+          },
+          {
+            "til_kw": 100,
+            "kr_per_mnd": 3284
+          },
+          {
+            "til_kw": null,
+            "kr_per_mnd": 5752
+          }
+        ]
+      },
+      "enova_800_per_aar": "kommer_i_tillegg",
+      "id": "GL.K:tidligere_norgesnett_fredrikstad_mfl:2026-10-01"
+    },
+    {
+      "produkt": "GL.L",
+      "omraadeversjon": "glitre_tidligere_agder_buskerud_hadeland",
+      "dekket_fra": "2026-01-01",
+      "dekket_til_eksklusiv": "2026-10-01",
+      "kilder": [
+        "gark",
+        "ge"
+      ],
+      "status": "kildebelagt",
+      "fastledd": {
+        "kr_per_mnd": 500
+      },
+      "energiledd_uttak": {
+        "modell": "lik_hele_doegnet",
+        "ore_per_kwh": 7.9
+      },
+      "kapasitet_eller_effekt": {
+        "modell": "pris_ganger_kw",
+        "grunnlag": "hoeyeste_klokketime_i_maaneden",
+        "maaleintervall_min": 60,
+        "kr_per_kw_mnd": {
+          "sommermaaneder": [
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ],
+          "sommer": 33,
+          "resten_av_aaret": 99
+        }
+      },
+      "enova_800_per_aar": "kommer_i_tillegg",
+      "id": "GL.L:glitre_tidligere_agder_buskerud_hadeland:2026-01-01"
+    },
+    {
+      "produkt": "GL.L",
+      "omraadeversjon": "glitre_tidligere_agder_buskerud_hadeland",
+      "dekket_fra": "2026-10-01",
+      "dekket_til_eksklusiv": null,
+      "kilder": [
+        "ge"
+      ],
+      "status": "kildebelagt",
+      "fastledd": {
+        "kr_per_mnd": 500
+      },
+      "energiledd_uttak": {
+        "modell": "lik_hele_doegnet",
+        "ore_per_kwh": 7.9
+      },
+      "kapasitet_eller_effekt": {
+        "modell": "pris_ganger_kw",
+        "grunnlag": "hoeyeste_klokketime_i_maaneden",
+        "maaleintervall_min": 60,
+        "kr_per_kw_mnd": {
+          "sommermaaneder": [
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ],
+          "sommer": 34,
+          "resten_av_aaret": 102
+        }
+      },
+      "enova_800_per_aar": "kommer_i_tillegg",
+      "id": "GL.L:glitre_tidligere_agder_buskerud_hadeland:2026-10-01"
+    },
+    {
+      "produkt": "GL.L",
+      "omraadeversjon": "tidligere_norgesnett_fredrikstad_mfl",
+      "dekket_fra": "2026-10-01",
+      "dekket_til_eksklusiv": null,
+      "kilder": [
+        "ge",
+        "gngark",
+        "ngold"
+      ],
+      "status": "maa_avklares",
+      "fastledd": {
+        "kr_per_mnd": 500
+      },
+      "energiledd_uttak": {
+        "modell": "lik_hele_doegnet",
+        "ore_per_kwh": 7.9
+      },
+      "kapasitet_eller_effekt": {
+        "modell": "pris_ganger_kw",
+        "grunnlag": "maa_bekreftes_lokal_ls",
+        "maaleintervall_min": 60,
+        "kr_per_kw_mnd": {
+          "sommermaaneder": [
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ],
+          "sommer": 34,
+          "resten_av_aaret": 102
+        }
+      },
+      "enova_800_per_aar": "kommer_i_tillegg",
+      "sperre": "Tidligere Norgesnett oppga tre døgnmakser for lavspent. Dagens Glitre-side sier høyeste time. Verifiser faktura/vilkår for dette målepunktet og denne perioden før beregning.",
+      "id": "GL.L:tidligere_norgesnett_fredrikstad_mfl:2026-10-01"
+    },
+    {
+      "produkt": "GL.H",
+      "omraadeversjon": "glitre_tidligere_agder_buskerud_hadeland",
+      "dekket_fra": "2026-01-01",
+      "dekket_til_eksklusiv": "2026-10-01",
+      "kilder": [
+        "gark",
+        "ge"
+      ],
+      "status": "kildebelagt",
+      "fastledd": {
+        "kr_per_mnd": 1000
+      },
+      "energiledd_uttak": {
+        "modell": "lik_hele_doegnet",
+        "ore_per_kwh": 6.6
+      },
+      "kapasitet_eller_effekt": {
+        "modell": "pris_ganger_kw",
+        "grunnlag": "hoeyeste_klokketime_i_maaneden",
+        "maaleintervall_min": 60,
+        "kr_per_kw_mnd": {
+          "sommermaaneder": [
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ],
+          "sommer": 29.5,
+          "resten_av_aaret": 88
+        }
+      },
+      "enova_800_per_aar": "kommer_i_tillegg",
+      "id": "GL.H:glitre_tidligere_agder_buskerud_hadeland:2026-01-01",
+      "vilkaar_i_denne_versjonen": "Historikksiden presenterer høyspent under forbruk over 100 000 kWh. Ved lavere forbruk: krev historisk dokumentasjon på kundegruppen."
+    },
+    {
+      "produkt": "GL.H",
+      "omraadeversjon": "glitre_tidligere_agder_buskerud_hadeland",
+      "dekket_fra": "2026-10-01",
+      "dekket_til_eksklusiv": null,
+      "kilder": [
+        "ge"
+      ],
+      "status": "kildebelagt",
+      "fastledd": {
+        "kr_per_mnd": 1000
+      },
+      "energiledd_uttak": {
+        "modell": "lik_hele_doegnet",
+        "ore_per_kwh": 6.6
+      },
+      "kapasitet_eller_effekt": {
+        "modell": "pris_ganger_kw",
+        "grunnlag": "hoeyeste_klokketime_i_maaneden",
+        "maaleintervall_min": 60,
+        "kr_per_kw_mnd": {
+          "sommermaaneder": [
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ],
+          "sommer": 31,
+          "resten_av_aaret": 93
+        }
+      },
+      "enova_800_per_aar": "kommer_i_tillegg",
+      "id": "GL.H:glitre_tidligere_agder_buskerud_hadeland:2026-10-01"
+    },
+    {
+      "produkt": "GL.H",
+      "omraadeversjon": "tidligere_norgesnett_fredrikstad_mfl",
+      "dekket_fra": "2026-10-01",
+      "dekket_til_eksklusiv": null,
+      "kilder": [
+        "ge"
+      ],
+      "status": "kildebelagt",
+      "fastledd": {
+        "kr_per_mnd": 1000
+      },
+      "energiledd_uttak": {
+        "modell": "lik_hele_doegnet",
+        "ore_per_kwh": 6.6
+      },
+      "kapasitet_eller_effekt": {
+        "modell": "pris_ganger_kw",
+        "grunnlag": "hoeyeste_klokketime_i_maaneden",
+        "maaleintervall_min": 60,
+        "kr_per_kw_mnd": {
+          "sommermaaneder": [
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ],
+          "sommer": 31,
+          "resten_av_aaret": 93
+        }
+      },
+      "enova_800_per_aar": "kommer_i_tillegg",
+      "id": "GL.H:tidligere_norgesnett_fredrikstad_mfl:2026-10-01"
+    },
+    {
+      "produkt": "GL.DL",
+      "omraadeversjon": "hele_nettomraadet",
+      "dekket_fra": "2026-10-01",
+      "dekket_til_eksklusiv": null,
+      "kilder": [
+        "ge"
+      ],
+      "status": "maa_avklares",
+      "fastledd": {
+        "kr_per_mnd": 500
+      },
+      "energiledd_uttak": {
+        "modell": "lik_hele_doegnet",
+        "ore_per_kwh": 7.9
+      },
+      "kapasitet_eller_effekt": {
+        "modell": "effekt_dag_natt",
+        "dag_fra": "06:00",
+        "dag_til_eksklusiv": "22:00",
+        "kr_per_kw_mnd": {
+          "sommermaaneder": [
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ],
+          "sommer": {
+            "dag": 51,
+            "natt": 11.33
+          },
+          "resten_av_aaret": {
+            "dag": 153,
+            "natt": 34
+          }
+        },
+        "sammenstilling_av_makser": null
+      },
+      "enova_800_per_aar": "kommer_i_tillegg",
+      "sperre": "Krever aktiv påmelding og dokumentert regel for sammenstilling av dag- og nattmaks. Ikke anta at to maksimum alltid summeres; bekreft satsene i avtalen.",
+      "id": "GL.DL:hele_nettomraadet:2026-10-01"
+    },
+    {
+      "produkt": "GL.DH",
+      "omraadeversjon": "hele_nettomraadet",
+      "dekket_fra": "2026-10-01",
+      "dekket_til_eksklusiv": null,
+      "kilder": [
+        "ge"
+      ],
+      "status": "maa_avklares",
+      "fastledd": {
+        "kr_per_mnd": 1000
+      },
+      "energiledd_uttak": {
+        "modell": "lik_hele_doegnet",
+        "ore_per_kwh": 6.6
+      },
+      "kapasitet_eller_effekt": {
+        "modell": "effekt_dag_natt",
+        "dag_fra": "06:00",
+        "dag_til_eksklusiv": "22:00",
+        "kr_per_kw_mnd": {
+          "sommermaaneder": [
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ],
+          "sommer": {
+            "dag": 46.5,
+            "natt": 10.33
+          },
+          "resten_av_aaret": {
+            "dag": 139.5,
+            "natt": 31
+          }
+        },
+        "sammenstilling_av_makser": null
+      },
+      "enova_800_per_aar": "kommer_i_tillegg",
+      "sperre": "Krever aktiv påmelding og dokumentert regel for sammenstilling av dag- og nattmaks. Ikke anta at to maksimum alltid summeres; bekreft satsene i avtalen.",
+      "id": "GL.DH:hele_nettomraadet:2026-10-01"
+    },
+    {
+      "produkt": "GL.K",
+      "omraadeversjon": "tidligere_norgesnett_fredrikstad_mfl",
+      "dekket_fra": "2026-01-01",
+      "dekket_til_eksklusiv": "2026-07-01",
+      "kilder": [
+        "gng1",
+        "gngark"
+      ],
+      "status": "kildebelagt",
+      "fastledd": {
+        "kr_per_mnd": 0
+      },
+      "energiledd_uttak": {
+        "modell": "dag_natt",
+        "dag_fra": "06:00",
+        "dag_til_eksklusiv": "22:00",
+        "dag_gjelder": "alle_dager",
+        "dag_ore_per_kwh": 20.26,
+        "ellers_ore_per_kwh": 13.28
+      },
+      "kapasitet_eller_effekt": {
+        "modell": "ett_kapasitetstrinn",
+        "grunnlag": "snitt_av_tre_hoeyeste_doegnmakser_ulike_datoer",
+        "maaleintervall_min": 60,
+        "grenser": "nedre_inklusiv",
+        "trinn": [
+          {
+            "til_kw": 2,
+            "kr_per_mnd": 160.98
+          },
+          {
+            "til_kw": 5,
+            "kr_per_mnd": 223.86
+          },
+          {
+            "til_kw": 10,
+            "kr_per_mnd": 325.16
+          },
+          {
+            "til_kw": 15,
+            "kr_per_mnd": 526.37
+          },
+          {
+            "til_kw": 20,
+            "kr_per_mnd": 677.27
+          },
+          {
+            "til_kw": 25,
+            "kr_per_mnd": 823.99
+          },
+          {
+            "til_kw": 50,
+            "kr_per_mnd": 1240.37
+          },
+          {
+            "til_kw": 75,
+            "kr_per_mnd": 1904.07
+          },
+          {
+            "til_kw": 100,
+            "kr_per_mnd": 2567.77
+          },
+          {
+            "til_kw": null,
+            "kr_per_mnd": 4120.14
+          }
+        ]
+      },
+      "enova_800_per_aar": "inkludert_i_trinn_eller_fastledd",
+      "enova_ekstra_kr_per_aar": 0,
+      "id": "GL.K:tidligere_norgesnett_fredrikstad_mfl:2026-01-01"
+    },
+    {
+      "produkt": "GL.K",
+      "omraadeversjon": "tidligere_norgesnett_fredrikstad_mfl",
+      "dekket_fra": "2026-07-01",
+      "dekket_til_eksklusiv": "2026-10-01",
+      "kilder": [
+        "gng7",
+        "gngark"
+      ],
+      "status": "kildebelagt",
+      "fastledd": {
+        "kr_per_mnd": 0
+      },
+      "energiledd_uttak": {
+        "modell": "dag_natt",
+        "dag_fra": "06:00",
+        "dag_til_eksklusiv": "22:00",
+        "dag_gjelder": "alle_dager",
+        "dag_ore_per_kwh": 22.55,
+        "ellers_ore_per_kwh": 14.24
+      },
+      "kapasitet_eller_effekt": {
+        "modell": "ett_kapasitetstrinn",
+        "grunnlag": "snitt_av_tre_hoeyeste_doegnmakser_ulike_datoer",
+        "maaleintervall_min": 60,
+        "grenser": "nedre_inklusiv",
+        "trinn": [
+          {
+            "til_kw": 2,
+            "kr_per_mnd": 210.67
+          },
+          {
+            "til_kw": 5,
+            "kr_per_mnd": 282.67
+          },
+          {
+            "til_kw": 10,
+            "kr_per_mnd": 390.67
+          },
+          {
+            "til_kw": 15,
+            "kr_per_mnd": 602.67
+          },
+          {
+            "til_kw": 20,
+            "kr_per_mnd": 798.67
+          },
+          {
+            "til_kw": 25,
+            "kr_per_mnd": 978.67
+          },
+          {
+            "til_kw": 50,
+            "kr_per_mnd": 1462.67
+          },
+          {
+            "til_kw": 75,
+            "kr_per_mnd": 2214.67
+          },
+          {
+            "til_kw": 100,
+            "kr_per_mnd": 2966.67
+          },
+          {
+            "til_kw": null,
+            "kr_per_mnd": 4754.67
+          }
+        ]
+      },
+      "enova_800_per_aar": "inkludert_i_trinn_eller_fastledd",
+      "enova_ekstra_kr_per_aar": 0,
+      "id": "GL.K:tidligere_norgesnett_fredrikstad_mfl:2026-07-01"
+    },
+    {
+      "produkt": "GL.L",
+      "omraadeversjon": "tidligere_norgesnett_fredrikstad_mfl",
+      "dekket_fra": "2026-01-01",
+      "dekket_til_eksklusiv": "2026-07-01",
+      "kilder": [
+        "gng1"
+      ],
+      "status": "kildebelagt",
+      "fastledd": {
+        "kr_per_aar": 5632.44
+      },
+      "energiledd_uttak": {
+        "modell": "sesong",
+        "ore_per_kwh": {
+          "sommermaaneder": [
+            5,
+            6,
+            7,
+            8,
+            9,
+            10
+          ],
+          "sommer": 3.84,
+          "resten_av_aaret": 5.47
+        }
+      },
+      "kapasitet_eller_effekt": {
+        "modell": "marginale_effektblokker",
+        "grunnlag": "snitt_av_tre_hoeyeste_doegnmakser_ulike_datoer",
+        "maaleintervall_min": 60,
+        "blokker": [
+          {
+            "til_kw": 100,
+            "kr_per_kw_mnd": 66.83
+          },
+          {
+            "til_kw": null,
+            "kr_per_kw_mnd": 64.92
+          }
+        ]
+      },
+      "enova_800_per_aar": "inkludert_i_trinn_eller_fastledd",
+      "enova_ekstra_kr_per_aar": 0,
+      "id": "GL.L:tidligere_norgesnett_fredrikstad_mfl:2026-01-01"
+    },
+    {
+      "produkt": "GL.H",
+      "omraadeversjon": "tidligere_norgesnett_fredrikstad_mfl",
+      "dekket_fra": "2026-01-01",
+      "dekket_til_eksklusiv": "2026-07-01",
+      "kilder": [
+        "gng1"
+      ],
+      "status": "kildebelagt",
+      "fastledd": {
+        "kr_per_aar": 19019.17
+      },
+      "energiledd_uttak": {
+        "modell": "sesong",
+        "ore_per_kwh": {
+          "sommermaaneder": [
+            5,
+            6,
+            7,
+            8,
+            9,
+            10
+          ],
+          "sommer": 2.2,
+          "resten_av_aaret": 3.3
+        }
+      },
+      "kapasitet_eller_effekt": {
+        "modell": "pris_ganger_kw",
+        "grunnlag": "hoeyeste_klokketime_i_maaneden",
+        "maaleintervall_min": 60,
+        "kr_per_kw_mnd": 45.57
+      },
+      "enova_800_per_aar": "inkludert_i_trinn_eller_fastledd",
+      "enova_ekstra_kr_per_aar": 0,
+      "vilkaar_i_denne_versjonen": "Norgesnett: effekttariff for næring over 100 000 kWh; ved annen gruppe/kundetype, bruk avtalen.",
+      "id": "GL.H:tidligere_norgesnett_fredrikstad_mfl:2026-01-01"
+    },
+    {
+      "produkt": "GL.L",
+      "omraadeversjon": "tidligere_norgesnett_fredrikstad_mfl",
+      "dekket_fra": "2026-07-01",
+      "dekket_til_eksklusiv": "2026-10-01",
+      "kilder": [
+        "gng7",
+        "gng1",
+        "ngold",
+        "gnjultekst"
+      ],
+      "status": "kildebelagt",
+      "fastledd": {
+        "kr_per_mnd": 566.67
+      },
+      "energiledd_uttak": {
+        "modell": "lik_hele_doegnet",
+        "ore_per_kwh": 6.9
+      },
+      "kapasitet_eller_effekt": {
+        "modell": "pris_ganger_kw",
+        "grunnlag": "snitt_av_tre_hoeyeste_doegnmakser_ulike_datoer",
+        "maaleintervall_min": 60,
+        "kr_per_kw_mnd": {
+          "sommermaaneder": [
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ],
+          "sommer": 33,
+          "resten_av_aaret": 99
+        }
+      },
+      "enova_800_per_aar": "inkludert_i_trinn_eller_fastledd",
+      "merknad": "Juliarket oppgir satser; målemetode er beskrevet av tidligere Norgesnett.",
+      "enova_ekstra_kr_per_aar": 0,
+      "id": "GL.L:tidligere_norgesnett_fredrikstad_mfl:2026-07-01"
+    },
+    {
+      "produkt": "GL.H",
+      "omraadeversjon": "tidligere_norgesnett_fredrikstad_mfl",
+      "dekket_fra": "2026-07-01",
+      "dekket_til_eksklusiv": "2026-10-01",
+      "kilder": [
+        "gng7",
+        "gng1",
+        "ngold",
+        "gnjultekst"
+      ],
+      "status": "kildebelagt",
+      "fastledd": {
+        "kr_per_mnd": 1066.67
+      },
+      "energiledd_uttak": {
+        "modell": "lik_hele_doegnet",
+        "ore_per_kwh": 5.5
+      },
+      "kapasitet_eller_effekt": {
+        "modell": "pris_ganger_kw",
+        "grunnlag": "hoeyeste_klokketime_i_maaneden",
+        "maaleintervall_min": 60,
+        "kr_per_kw_mnd": {
+          "sommermaaneder": [
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ],
+          "sommer": 29.5,
+          "resten_av_aaret": 88
+        }
+      },
+      "enova_800_per_aar": "inkludert_i_trinn_eller_fastledd",
+      "merknad": "Juliarket oppgir satser; målemetode er beskrevet av tidligere Norgesnett. PDF viser 88,00 om vinteren, opprinnelig nettside 88,50. Perioden juli–september inneholder bare sommer; vintersatsen skal aldri benyttes fra denne versjonen.",
+      "enova_ekstra_kr_per_aar": 0,
+      "vilkaar_i_denne_versjonen": "Norgesnett: effekttariff for næring over 100 000 kWh; ved annen gruppe/kundetype, bruk avtalen.",
+      "id": "GL.H:tidligere_norgesnett_fredrikstad_mfl:2026-07-01"
+    },
+    {
+      "produkt": "LD.K",
+      "omraadeversjon": "hele_nettomraadet",
+      "dekket_fra": "2026-01-01",
+      "dekket_til_eksklusiv": "2026-05-01",
+      "kilder": [
+        "ld1"
+      ],
+      "status": "kildebelagt",
+      "fastledd": {
+        "kr_per_mnd": 0
+      },
+      "energiledd_uttak": {
+        "modell": "lik_hele_doegnet",
+        "ore_per_kwh": 24.38
+      },
+      "kapasitet_eller_effekt": {
+        "modell": "ett_kapasitetstrinn",
+        "grunnlag": "snitt_av_tre_hoeyeste_doegnmakser_ulike_datoer",
+        "maaleintervall_min": 60,
+        "grenser": "nedre_inklusiv",
+        "trinn": [
+          {
+            "til_kw": 5,
+            "kr_per_mnd": 235
+          },
+          {
+            "til_kw": 10,
+            "kr_per_mnd": 402
+          },
+          {
+            "til_kw": 15,
+            "kr_per_mnd": 566
+          },
+          {
+            "til_kw": 20,
+            "kr_per_mnd": 733
+          },
+          {
+            "til_kw": 25,
+            "kr_per_mnd": 899
+          },
+          {
+            "til_kw": 50,
+            "kr_per_mnd": 1397
+          },
+          {
+            "til_kw": 75,
+            "kr_per_mnd": 2227
+          },
+          {
+            "til_kw": 100,
+            "kr_per_mnd": 3056
+          },
+          {
+            "til_kw": 150,
+            "kr_per_mnd": 4301
+          },
+          {
+            "til_kw": 200,
+            "kr_per_mnd": 5960
+          },
+          {
+            "til_kw": null,
+            "kr_per_mnd": 8450
+          }
+        ]
+      },
+      "enova_800_per_aar": "kommer_i_tillegg",
+      "id": "LD.K:hele_nettomraadet:2026-01-01"
+    },
+    {
+      "produkt": "LD.L",
+      "omraadeversjon": "hele_nettomraadet",
+      "dekket_fra": "2026-01-01",
+      "dekket_til_eksklusiv": "2026-05-01",
+      "kilder": [
+        "ld1",
+        "ldmåling"
+      ],
+      "status": "kildebelagt",
+      "fastledd": {
+        "kr_per_mnd": 250
+      },
+      "energiledd_uttak": {
+        "modell": "sesong",
+        "ore_per_kwh": {
+          "sommermaaneder": [
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ],
+          "sommer": 3.5,
+          "resten_av_aaret": 5.5
+        }
+      },
+      "kapasitet_eller_effekt": {
+        "modell": "pris_ganger_kw",
+        "grunnlag": "hoeyeste_klokketime_i_maaneden",
+        "maaleintervall_min": 60,
+        "kr_per_kw_mnd": {
+          "sommermaaneder": [
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ],
+          "sommer": 51.26,
+          "resten_av_aaret": 69.91
+        }
+      },
+      "enova_800_per_aar": "kommer_i_tillegg",
+      "reaktivt": {
+        "cos_phi_under": 0.9,
+        "kr_per_kvar_mnd": 28,
+        "maaletid": "time med høyest aktiv effekt",
+        "bruk": "følg fakturavilkår for mengden, ikke utled kVAr av kWh"
+      },
+      "id": "LD.L:hele_nettomraadet:2026-01-01"
+    },
+    {
+      "produkt": "LD.H",
+      "omraadeversjon": "hele_nettomraadet",
+      "dekket_fra": "2026-01-01",
+      "dekket_til_eksklusiv": "2026-05-01",
+      "kilder": [
+        "ld1",
+        "ldmåling"
+      ],
+      "status": "kildebelagt",
+      "fastledd": {
+        "kr_per_mnd": 500
+      },
+      "energiledd_uttak": {
+        "modell": "sesong",
+        "ore_per_kwh": {
+          "sommermaaneder": [
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ],
+          "sommer": 2.8,
+          "resten_av_aaret": 4
+        }
+      },
+      "kapasitet_eller_effekt": {
+        "modell": "pris_ganger_kw",
+        "grunnlag": "hoeyeste_klokketime_i_maaneden",
+        "maaleintervall_min": 60,
+        "kr_per_kw_mnd": {
+          "sommermaaneder": [
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ],
+          "sommer": 37.53,
+          "resten_av_aaret": 51.2
+        }
+      },
+      "enova_800_per_aar": "kommer_i_tillegg",
+      "reaktivt": {
+        "cos_phi_under": 0.9,
+        "kr_per_kvar_mnd": 15,
+        "maaletid": "time med høyest aktiv effekt",
+        "bruk": "følg fakturavilkår for mengden, ikke utled kVAr av kWh"
+      },
+      "id": "LD.H:hele_nettomraadet:2026-01-01"
+    },
+    {
+      "produkt": "LD.K",
+      "omraadeversjon": "hele_nettomraadet",
+      "dekket_fra": "2026-05-01",
+      "dekket_til_eksklusiv": null,
+      "kilder": [
+        "ld5",
+        "ld5p"
+      ],
+      "status": "kildebelagt",
+      "fastledd": {
+        "kr_per_mnd": 0
+      },
+      "energiledd_uttak": {
+        "modell": "lik_hele_doegnet",
+        "ore_per_kwh": 11.41
+      },
+      "kapasitet_eller_effekt": {
+        "modell": "ett_kapasitetstrinn",
+        "grunnlag": "snitt_av_tre_hoeyeste_doegnmakser_ulike_datoer",
+        "maaleintervall_min": 60,
+        "grenser": "nedre_inklusiv",
+        "trinn": [
+          {
+            "til_kw": 5,
+            "kr_per_mnd": 215
+          },
+          {
+            "til_kw": 10,
+            "kr_per_mnd": 367
+          },
+          {
+            "til_kw": 15,
+            "kr_per_mnd": 518
+          },
+          {
+            "til_kw": 20,
+            "kr_per_mnd": 670
+          },
+          {
+            "til_kw": 25,
+            "kr_per_mnd": 822
+          },
+          {
+            "til_kw": 50,
+            "kr_per_mnd": 1277
+          },
+          {
+            "til_kw": 75,
+            "kr_per_mnd": 2036
+          },
+          {
+            "til_kw": 100,
+            "kr_per_mnd": 2794
+          },
+          {
+            "til_kw": 150,
+            "kr_per_mnd": 3932
+          },
+          {
+            "til_kw": 200,
+            "kr_per_mnd": 5448
+          },
+          {
+            "til_kw": null,
+            "kr_per_mnd": 7724
+          }
+        ]
+      },
+      "enova_800_per_aar": "kommer_i_tillegg",
+      "id": "LD.K:hele_nettomraadet:2026-05-01"
+    },
+    {
+      "produkt": "LD.L",
+      "omraadeversjon": "hele_nettomraadet",
+      "dekket_fra": "2026-05-01",
+      "dekket_til_eksklusiv": null,
+      "kilder": [
+        "ld5",
+        "ld5p",
+        "ldmåling"
+      ],
+      "status": "kildebelagt",
+      "fastledd": {
+        "kr_per_mnd": 250
+      },
+      "energiledd_uttak": {
+        "modell": "sesong",
+        "ore_per_kwh": {
+          "sommermaaneder": [
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ],
+          "sommer": 3.5,
+          "resten_av_aaret": 5.5
+        }
+      },
+      "kapasitet_eller_effekt": {
+        "modell": "pris_ganger_kw",
+        "grunnlag": "hoeyeste_klokketime_i_maaneden",
+        "maaleintervall_min": 60,
+        "kr_per_kw_mnd": {
+          "sommermaaneder": [
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ],
+          "sommer": 29.87,
+          "resten_av_aaret": 40.74
+        }
+      },
+      "enova_800_per_aar": "kommer_i_tillegg",
+      "reaktivt": {
+        "cos_phi_under": 0.9,
+        "kr_per_kvar_mnd": 28,
+        "maaletid": "time med høyest aktiv effekt",
+        "bruk": "følg fakturavilkår for mengden, ikke utled kVAr av kWh"
+      },
+      "id": "LD.L:hele_nettomraadet:2026-05-01"
+    },
+    {
+      "produkt": "LD.H",
+      "omraadeversjon": "hele_nettomraadet",
+      "dekket_fra": "2026-05-01",
+      "dekket_til_eksklusiv": null,
+      "kilder": [
+        "ld5",
+        "ld5p",
+        "ldmåling"
+      ],
+      "status": "kildebelagt",
+      "fastledd": {
+        "kr_per_mnd": 500
+      },
+      "energiledd_uttak": {
+        "modell": "sesong",
+        "ore_per_kwh": {
+          "sommermaaneder": [
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ],
+          "sommer": 2.8,
+          "resten_av_aaret": 4
+        }
+      },
+      "kapasitet_eller_effekt": {
+        "modell": "pris_ganger_kw",
+        "grunnlag": "hoeyeste_klokketime_i_maaneden",
+        "maaleintervall_min": 60,
+        "kr_per_kw_mnd": {
+          "sommermaaneder": [
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ],
+          "sommer": 21.87,
+          "resten_av_aaret": 30.25
+        }
+      },
+      "enova_800_per_aar": "kommer_i_tillegg",
+      "reaktivt": {
+        "cos_phi_under": 0.9,
+        "kr_per_kvar_mnd": 15,
+        "maaletid": "time med høyest aktiv effekt",
+        "bruk": "følg fakturavilkår for mengden, ikke utled kVAr av kWh"
+      },
+      "id": "LD.H:hele_nettomraadet:2026-05-01"
+    },
+    {
+      "produkt": "LI.K",
+      "omraadeversjon": "hele_nettomraadet",
+      "dekket_fra": "2026-01-01",
+      "dekket_til_eksklusiv": "2026-07-01",
+      "kilder": [
+        "li1",
+        "lip"
+      ],
+      "status": "kildebelagt",
+      "fastledd": {
+        "kr_per_mnd": 0
+      },
+      "energiledd_uttak": {
+        "modell": "dag_natt",
+        "dag_fra": "06:00",
+        "dag_til_eksklusiv": "22:00",
+        "dag_gjelder": "alle_dager",
+        "dag_ore_per_kwh": 22.38,
+        "ellers_ore_per_kwh": 15.38
+      },
+      "kapasitet_eller_effekt": {
+        "modell": "ett_kapasitetstrinn",
+        "grunnlag": "snitt_av_tre_hoeyeste_doegnmakser_ulike_datoer",
+        "maaleintervall_min": 60,
+        "grenser": "nedre_inklusiv",
+        "trinn": [
+          {
+            "til_kw": 2,
+            "kr_per_mnd": 287
+          },
+          {
+            "til_kw": 5,
+            "kr_per_mnd": 341
+          },
+          {
+            "til_kw": 10,
+            "kr_per_mnd": 396
+          },
+          {
+            "til_kw": 15,
+            "kr_per_mnd": 616
+          },
+          {
+            "til_kw": 20,
+            "kr_per_mnd": 726
+          },
+          {
+            "til_kw": 25,
+            "kr_per_mnd": 835
+          },
+          {
+            "til_kw": 50,
+            "kr_per_mnd": 1165
+          },
+          {
+            "til_kw": 75,
+            "kr_per_mnd": 1275
+          },
+          {
+            "til_kw": 100,
+            "kr_per_mnd": 1384
+          },
+          {
+            "til_kw": null,
+            "kr_per_mnd": 1714
+          }
+        ]
+      },
+      "enova_800_per_aar": "inkludert_i_trinn_eller_fastledd",
+      "publisert_foer_normalisering": {
+        "med_elavgift_ore_per_kwh": {
+          "dag": 29.51,
+          "natt": 22.51
+        },
+        "fratrukket": 7.13
+      },
+      "enova_ekstra_kr_per_aar": 0,
+      "id": "LI.K:hele_nettomraadet:2026-01-01"
+    },
+    {
+      "produkt": "LI.L",
+      "omraadeversjon": "hele_nettomraadet",
+      "dekket_fra": "2026-01-01",
+      "dekket_til_eksklusiv": "2026-07-01",
+      "kilder": [
+        "li1",
+        "lip"
+      ],
+      "status": "kildebelagt",
+      "fastledd": {
+        "kr_per_aar": 8800
+      },
+      "energiledd_uttak": {
+        "modell": "lik_hele_doegnet",
+        "ore_per_kwh": 7.2
+      },
+      "kapasitet_eller_effekt": {
+        "modell": "pris_ganger_kw",
+        "grunnlag": "hoeyeste_klokketime_i_maaneden",
+        "maaleintervall_min": 60,
+        "kr_per_kw_mnd": {
+          "sommermaaneder": [
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ],
+          "sommer": 35,
+          "resten_av_aaret": 77
+        }
+      },
+      "enova_800_per_aar": "inkludert_i_trinn_eller_fastledd",
+      "merknad": "Prisarket viser høyeste time i foregående måned (etterskuddsvis). Knytt til forbruksmåneden og skill den fra fakturadatoen.",
+      "publisert_foer_normalisering": {
+        "med_elavgift_ore_per_kwh": 14.33,
+        "fratrukket": 7.13
+      },
+      "reaktivt": {
+        "utloeses_ved": "reaktiv kVAr > 0,33 × aktiv kW i dimensjonerende aktive time",
+        "kr_per_kvar_mnd": {
+          "sommermaaneder": [
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ],
+          "sommer": 15,
+          "resten_av_aaret": 33
+        },
+        "bruk": "krever_relevant_maaling"
+      },
+      "enova_ekstra_kr_per_aar": 0,
+      "id": "LI.L:hele_nettomraadet:2026-01-01"
+    },
+    {
+      "produkt": "LI.H",
+      "omraadeversjon": "hele_nettomraadet",
+      "dekket_fra": "2026-01-01",
+      "dekket_til_eksklusiv": "2026-07-01",
+      "kilder": [
+        "li1",
+        "lip"
+      ],
+      "status": "kildebelagt",
+      "fastledd": {
+        "kr_per_aar": 20800
+      },
+      "energiledd_uttak": {
+        "modell": "lik_hele_doegnet",
+        "ore_per_kwh": 6.6
+      },
+      "kapasitet_eller_effekt": {
+        "modell": "pris_ganger_kw",
+        "grunnlag": "hoeyeste_klokketime_i_maaneden",
+        "maaleintervall_min": 60,
+        "kr_per_kw_mnd": {
+          "sommermaaneder": [
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ],
+          "sommer": 35,
+          "resten_av_aaret": 77
+        }
+      },
+      "enova_800_per_aar": "inkludert_i_trinn_eller_fastledd",
+      "merknad": "Prisarket viser høyeste time i foregående måned (etterskuddsvis). Knytt til forbruksmåneden og skill den fra fakturadatoen.",
+      "publisert_foer_normalisering": {
+        "med_elavgift_ore_per_kwh": 13.73,
+        "fratrukket": 7.13
+      },
+      "reaktivt": {
+        "utloeses_ved": "reaktiv kVAr > 0,33 × aktiv kW i dimensjonerende aktive time",
+        "kr_per_kvar_mnd": {
+          "sommermaaneder": [
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ],
+          "sommer": 15,
+          "resten_av_aaret": 33
+        },
+        "bruk": "krever_relevant_maaling"
+      },
+      "enova_ekstra_kr_per_aar": 0,
+      "id": "LI.H:hele_nettomraadet:2026-01-01"
+    },
+    {
+      "produkt": "LI.UL",
+      "omraadeversjon": "hele_nettomraadet",
+      "dekket_fra": "2026-01-01",
+      "dekket_til_eksklusiv": "2026-07-01",
+      "kilder": [
+        "li1",
+        "lip"
+      ],
+      "status": "kildebelagt",
+      "fastledd": {
+        "kr_per_aar": 8800
+      },
+      "energiledd_uttak": {
+        "modell": "lik_hele_doegnet",
+        "ore_per_kwh": 7.2
+      },
+      "kapasitet_eller_effekt": {
+        "modell": "pris_ganger_kw",
+        "grunnlag": "hoeyeste_klokketime_i_maaneden",
+        "maaleintervall_min": 60,
+        "kr_per_kw_mnd": {
+          "sommermaaneder": [
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ],
+          "sommer": 14,
+          "resten_av_aaret": 31
+        }
+      },
+      "enova_800_per_aar": "inkludert_i_trinn_eller_fastledd",
+      "merknad": "Prisarket viser høyeste time i foregående måned (etterskuddsvis). Knytt til forbruksmåneden og skill den fra fakturadatoen.",
+      "publisert_foer_normalisering": {
+        "med_elavgift_ore_per_kwh": 14.33,
+        "fratrukket": 7.13
+      },
+      "reaktivt": {
+        "utloeses_ved": "reaktiv kVAr > 0,33 × aktiv kW i dimensjonerende aktive time",
+        "kr_per_kvar_mnd": {
+          "sommermaaneder": [
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ],
+          "sommer": 15,
+          "resten_av_aaret": 33
+        },
+        "bruk": "krever_relevant_maaling"
+      },
+      "enova_ekstra_kr_per_aar": 0,
+      "id": "LI.UL:hele_nettomraadet:2026-01-01"
+    },
+    {
+      "produkt": "LI.UH",
+      "omraadeversjon": "hele_nettomraadet",
+      "dekket_fra": "2026-01-01",
+      "dekket_til_eksklusiv": "2026-07-01",
+      "kilder": [
+        "li1",
+        "lip"
+      ],
+      "status": "kildebelagt",
+      "fastledd": {
+        "kr_per_aar": 20800
+      },
+      "energiledd_uttak": {
+        "modell": "lik_hele_doegnet",
+        "ore_per_kwh": 6.6
+      },
+      "kapasitet_eller_effekt": {
+        "modell": "pris_ganger_kw",
+        "grunnlag": "hoeyeste_klokketime_i_maaneden",
+        "maaleintervall_min": 60,
+        "kr_per_kw_mnd": {
+          "sommermaaneder": [
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ],
+          "sommer": 20,
+          "resten_av_aaret": 44
+        }
+      },
+      "enova_800_per_aar": "inkludert_i_trinn_eller_fastledd",
+      "merknad": "Prisarket viser høyeste time i foregående måned (etterskuddsvis). Knytt til forbruksmåneden og skill den fra fakturadatoen.",
+      "publisert_foer_normalisering": {
+        "med_elavgift_ore_per_kwh": 13.73,
+        "fratrukket": 7.13
+      },
+      "reaktivt": {
+        "utloeses_ved": "reaktiv kVAr > 0,33 × aktiv kW i dimensjonerende aktive time",
+        "kr_per_kvar_mnd": {
+          "sommermaaneder": [
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ],
+          "sommer": 15,
+          "resten_av_aaret": 33
+        },
+        "bruk": "krever_relevant_maaling"
+      },
+      "enova_ekstra_kr_per_aar": 0,
+      "id": "LI.UH:hele_nettomraadet:2026-01-01"
+    },
+    {
+      "produkt": "LI.K",
+      "omraadeversjon": "hele_nettomraadet",
+      "dekket_fra": "2026-07-01",
+      "dekket_til_eksklusiv": null,
+      "kilder": [
+        "li7",
+        "lip"
+      ],
+      "status": "kildebelagt",
+      "fastledd": {
+        "kr_per_mnd": 0
+      },
+      "energiledd_uttak": {
+        "modell": "dag_natt",
+        "dag_fra": "06:00",
+        "dag_til_eksklusiv": "22:00",
+        "dag_gjelder": "alle_dager",
+        "dag_ore_per_kwh": 22.81,
+        "ellers_ore_per_kwh": 14.81
+      },
+      "kapasitet_eller_effekt": {
+        "modell": "ett_kapasitetstrinn",
+        "grunnlag": "snitt_av_tre_hoeyeste_doegnmakser_ulike_datoer",
+        "maaleintervall_min": 60,
+        "grenser": "nedre_inklusiv",
+        "trinn": [
+          {
+            "til_kw": 2,
+            "kr_per_mnd": 306
+          },
+          {
+            "til_kw": 5,
+            "kr_per_mnd": 365
+          },
+          {
+            "til_kw": 10,
+            "kr_per_mnd": 425
+          },
+          {
+            "til_kw": 15,
+            "kr_per_mnd": 663
+          },
+          {
+            "til_kw": 20,
+            "kr_per_mnd": 783
+          },
+          {
+            "til_kw": 25,
+            "kr_per_mnd": 902
+          },
+          {
+            "til_kw": 50,
+            "kr_per_mnd": 1260
+          },
+          {
+            "til_kw": 75,
+            "kr_per_mnd": 1379
+          },
+          {
+            "til_kw": 100,
+            "kr_per_mnd": 1499
+          },
+          {
+            "til_kw": null,
+            "kr_per_mnd": 1856
+          }
+        ]
+      },
+      "enova_800_per_aar": "inkludert_i_trinn_eller_fastledd",
+      "publisert_foer_normalisering": {
+        "med_elavgift_ore_per_kwh": {
+          "dag": 29.94,
+          "natt": 21.94
+        },
+        "fratrukket": 7.13
+      },
+      "enova_ekstra_kr_per_aar": 0,
+      "id": "LI.K:hele_nettomraadet:2026-07-01"
+    },
+    {
+      "produkt": "LI.L",
+      "omraadeversjon": "hele_nettomraadet",
+      "dekket_fra": "2026-07-01",
+      "dekket_til_eksklusiv": null,
+      "kilder": [
+        "li7",
+        "lip"
+      ],
+      "status": "kildebelagt",
+      "fastledd": {
+        "kr_per_aar": 8800
+      },
+      "energiledd_uttak": {
+        "modell": "lik_hele_doegnet",
+        "ore_per_kwh": 7.2
+      },
+      "kapasitet_eller_effekt": {
+        "modell": "pris_ganger_kw",
+        "grunnlag": "hoeyeste_klokketime_i_maaneden",
+        "maaleintervall_min": 60,
+        "kr_per_kw_mnd": {
+          "sommermaaneder": [
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ],
+          "sommer": 38,
+          "resten_av_aaret": 85
+        }
+      },
+      "enova_800_per_aar": "inkludert_i_trinn_eller_fastledd",
+      "merknad": "Prisarket viser høyeste time i foregående måned (etterskuddsvis). Knytt til forbruksmåneden og skill den fra fakturadatoen.",
+      "publisert_foer_normalisering": {
+        "med_elavgift_ore_per_kwh": 14.33,
+        "fratrukket": 7.13
+      },
+      "reaktivt": {
+        "utloeses_ved": "reaktiv kVAr > 0,33 × aktiv kW i dimensjonerende aktive time",
+        "kr_per_kvar_mnd": {
+          "sommermaaneder": [
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ],
+          "sommer": 16,
+          "resten_av_aaret": 37
+        },
+        "bruk": "krever_relevant_maaling"
+      },
+      "enova_ekstra_kr_per_aar": 0,
+      "id": "LI.L:hele_nettomraadet:2026-07-01"
+    },
+    {
+      "produkt": "LI.H",
+      "omraadeversjon": "hele_nettomraadet",
+      "dekket_fra": "2026-07-01",
+      "dekket_til_eksklusiv": null,
+      "kilder": [
+        "li7",
+        "lip"
+      ],
+      "status": "kildebelagt",
+      "fastledd": {
+        "kr_per_aar": 20800
+      },
+      "energiledd_uttak": {
+        "modell": "lik_hele_doegnet",
+        "ore_per_kwh": 6.0
+      },
+      "kapasitet_eller_effekt": {
+        "modell": "pris_ganger_kw",
+        "grunnlag": "hoeyeste_klokketime_i_maaneden",
+        "maaleintervall_min": 60,
+        "kr_per_kw_mnd": {
+          "sommermaaneder": [
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ],
+          "sommer": 35,
+          "resten_av_aaret": 77
+        }
+      },
+      "enova_800_per_aar": "inkludert_i_trinn_eller_fastledd",
+      "merknad": "Prisarket viser høyeste time i foregående måned (etterskuddsvis). Knytt til forbruksmåneden og skill den fra fakturadatoen.",
+      "publisert_foer_normalisering": {
+        "med_elavgift_ore_per_kwh": 13.13,
+        "fratrukket": 7.13
+      },
+      "reaktivt": {
+        "utloeses_ved": "reaktiv kVAr > 0,33 × aktiv kW i dimensjonerende aktive time",
+        "kr_per_kvar_mnd": {
+          "sommermaaneder": [
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ],
+          "sommer": 16,
+          "resten_av_aaret": 37
+        },
+        "bruk": "krever_relevant_maaling"
+      },
+      "enova_ekstra_kr_per_aar": 0,
+      "id": "LI.H:hele_nettomraadet:2026-07-01"
+    },
+    {
+      "produkt": "LI.UL",
+      "omraadeversjon": "hele_nettomraadet",
+      "dekket_fra": "2026-07-01",
+      "dekket_til_eksklusiv": null,
+      "kilder": [
+        "li7",
+        "lip"
+      ],
+      "status": "kildebelagt",
+      "fastledd": {
+        "kr_per_aar": 8800
+      },
+      "energiledd_uttak": {
+        "modell": "lik_hele_doegnet",
+        "ore_per_kwh": 7.2
+      },
+      "kapasitet_eller_effekt": {
+        "modell": "pris_ganger_kw",
+        "grunnlag": "hoeyeste_klokketime_i_maaneden",
+        "maaleintervall_min": 60,
+        "kr_per_kw_mnd": {
+          "sommermaaneder": [
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ],
+          "sommer": 15,
+          "resten_av_aaret": 34
+        }
+      },
+      "enova_800_per_aar": "inkludert_i_trinn_eller_fastledd",
+      "merknad": "Prisarket viser høyeste time i foregående måned (etterskuddsvis). Knytt til forbruksmåneden og skill den fra fakturadatoen.",
+      "publisert_foer_normalisering": {
+        "med_elavgift_ore_per_kwh": 14.33,
+        "fratrukket": 7.13
+      },
+      "reaktivt": {
+        "utloeses_ved": "reaktiv kVAr > 0,33 × aktiv kW i dimensjonerende aktive time",
+        "kr_per_kvar_mnd": {
+          "sommermaaneder": [
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ],
+          "sommer": 16,
+          "resten_av_aaret": 37
+        },
+        "bruk": "krever_relevant_maaling"
+      },
+      "enova_ekstra_kr_per_aar": 0,
+      "id": "LI.UL:hele_nettomraadet:2026-07-01"
+    },
+    {
+      "produkt": "LI.UH",
+      "omraadeversjon": "hele_nettomraadet",
+      "dekket_fra": "2026-07-01",
+      "dekket_til_eksklusiv": null,
+      "kilder": [
+        "li7",
+        "lip"
+      ],
+      "status": "kildebelagt",
+      "fastledd": {
+        "kr_per_aar": 20800
+      },
+      "energiledd_uttak": {
+        "modell": "lik_hele_doegnet",
+        "ore_per_kwh": 6.0
+      },
+      "kapasitet_eller_effekt": {
+        "modell": "pris_ganger_kw",
+        "grunnlag": "hoeyeste_klokketime_i_maaneden",
+        "maaleintervall_min": 60,
+        "kr_per_kw_mnd": {
+          "sommermaaneder": [
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ],
+          "sommer": 20,
+          "resten_av_aaret": 44
+        }
+      },
+      "enova_800_per_aar": "inkludert_i_trinn_eller_fastledd",
+      "merknad": "Prisarket viser høyeste time i foregående måned (etterskuddsvis). Knytt til forbruksmåneden og skill den fra fakturadatoen.",
+      "publisert_foer_normalisering": {
+        "med_elavgift_ore_per_kwh": 13.13,
+        "fratrukket": 7.13
+      },
+      "reaktivt": {
+        "utloeses_ved": "reaktiv kVAr > 0,33 × aktiv kW i dimensjonerende aktive time",
+        "kr_per_kvar_mnd": {
+          "sommermaaneder": [
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ],
+          "sommer": 16,
+          "resten_av_aaret": 37
+        },
+        "bruk": "krever_relevant_maaling"
+      },
+      "enova_ekstra_kr_per_aar": 0,
+      "id": "LI.UH:hele_nettomraadet:2026-07-01"
+    },
+    {
+      "produkt": "NV.K",
+      "omraadeversjon": "hele_nettomraadet",
+      "dekket_fra": "2026-01-01",
+      "dekket_til_eksklusiv": "2026-07-01",
+      "kilder": [
+        "nv1"
+      ],
+      "status": "kildebelagt",
+      "fastledd": {
+        "kr_per_mnd": 0
+      },
+      "energiledd_uttak": {
+        "modell": "dag_natt",
+        "dag_fra": "06:00",
+        "dag_til_eksklusiv": "22:00",
+        "dag_gjelder": "alle_dager",
+        "dag_ore_per_kwh": 26.03,
+        "ellers_ore_per_kwh": 20.03
+      },
+      "kapasitet_eller_effekt": {
+        "modell": "ett_kapasitetstrinn",
+        "grunnlag": "snitt_av_tre_hoeyeste_doegnmakser_ulike_datoer",
+        "maaleintervall_min": 60,
+        "grenser": "nedre_inklusiv",
+        "trinn": [
+          {
+            "til_kw": 2,
+            "kr_per_mnd": 193
+          },
+          {
+            "til_kw": 5,
+            "kr_per_mnd": 377
+          },
+          {
+            "til_kw": 10,
+            "kr_per_mnd": 449
+          },
+          {
+            "til_kw": 15,
+            "kr_per_mnd": 647
+          },
+          {
+            "til_kw": 20,
+            "kr_per_mnd": 755
+          },
+          {
+            "til_kw": 25,
+            "kr_per_mnd": 870
+          },
+          {
+            "til_kw": 50,
+            "kr_per_mnd": 1607
+          },
+          {
+            "til_kw": 75,
+            "kr_per_mnd": 2347
+          },
+          {
+            "til_kw": 100,
+            "kr_per_mnd": 3085
+          },
+          {
+            "til_kw": null,
+            "kr_per_mnd": 6003
+          }
+        ]
+      },
+      "enova_800_per_aar": "inkludert_i_trinn_eller_fastledd",
+      "enova_ekstra_kr_per_aar": 0,
+      "id": "NV.K:hele_nettomraadet:2026-01-01"
+    },
+    {
+      "produkt": "NV.L",
+      "omraadeversjon": "hele_nettomraadet",
+      "dekket_fra": "2026-01-01",
+      "dekket_til_eksklusiv": "2026-07-01",
+      "kilder": [
+        "nv1"
+      ],
+      "status": "maa_avklares",
+      "fastledd": {
+        "kr_per_aar": 14845
+      },
+      "energiledd_uttak": {
+        "modell": "lik_hele_doegnet",
+        "ore_per_kwh": 8.5
+      },
+      "kapasitet_eller_effekt": {
+        "modell": "marginale_effektblokker",
+        "grunnlag": "hoeyeste_time_i_hoeglast",
+        "maaleintervall_min": 60,
+        "blokker": [
+          {
+            "til_kw": 100,
+            "kr_per_kw_mnd": 76
+          },
+          {
+            "til_kw": 200,
+            "kr_per_kw_mnd": 68
+          },
+          {
+            "til_kw": 500,
+            "kr_per_kw_mnd": 57
+          },
+          {
+            "til_kw": null,
+            "kr_per_kw_mnd": 47
+          }
+        ],
+        "effektkalender": null
+      },
+      "enova_800_per_aar": "inkludert_i_trinn_eller_fastledd",
+      "sperre": "Januararket nevner maksimum i høglast, men uten entydig kalender. Verifiser vindu, og for T3T at blokkene avregnes marginalt, før aktivering. Ikke bruk tilfeldig 06–21 eller 24 timer.",
+      "reaktivt": {
+        "tillatt_reaktiv_andel_av_aktiv": 0.5,
+        "ore_per_kvarh": 5.13,
+        "kr_per_kvar_mnd": 5.45,
+        "bruk": "verifiser dimensjonerende mengde med målinger/faktura"
+      },
+      "enova_ekstra_kr_per_aar": 0,
+      "id": "NV.L:hele_nettomraadet:2026-01-01"
+    },
+    {
+      "produkt": "NV.H",
+      "omraadeversjon": "hele_nettomraadet",
+      "dekket_fra": "2026-01-01",
+      "dekket_til_eksklusiv": "2026-07-01",
+      "kilder": [
+        "nv1"
+      ],
+      "status": "maa_avklares",
+      "fastledd": {
+        "kr_per_aar": 28956
+      },
+      "energiledd_uttak": {
+        "modell": "sesong",
+        "ore_per_kwh": {
+          "sommermaaneder": [
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10
+          ],
+          "sommer": 5.93,
+          "resten_av_aaret": 10.15
+        }
+      },
+      "kapasitet_eller_effekt": {
+        "modell": "pris_ganger_kw",
+        "grunnlag": "hoeyeste_time_i_hoeglast",
+        "maaleintervall_min": 60,
+        "kr_per_kw_mnd": {
+          "sommermaaneder": [
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10
+          ],
+          "sommer": 34,
+          "resten_av_aaret": 67
+        },
+        "effektkalender": null
+      },
+      "enova_800_per_aar": "inkludert_i_trinn_eller_fastledd",
+      "sperre": "Bekreft høglastvinduet for denne tariffen; ikke anta samme regel som småkundens dagpris.",
+      "reaktivt": {
+        "tillatt_reaktiv_andel_av_aktiv": 0.5,
+        "ore_per_kvarh": 5.13,
+        "kr_per_kvar_mnd": 5.45,
+        "bruk": "verifiser dimensjonerende mengde med målinger/faktura"
+      },
+      "enova_ekstra_kr_per_aar": 0,
+      "id": "NV.H:hele_nettomraadet:2026-01-01"
+    },
+    {
+      "produkt": "NV.HS1",
+      "omraadeversjon": "hele_nettomraadet",
+      "dekket_fra": "2026-01-01",
+      "dekket_til_eksklusiv": "2026-07-01",
+      "kilder": [
+        "nv1"
+      ],
+      "status": "maa_avklares",
+      "fastledd": {
+        "kr_per_aar": 28956
+      },
+      "energiledd_uttak": {
+        "modell": "sesong",
+        "ore_per_kwh": {
+          "sommermaaneder": [
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10
+          ],
+          "sommer": 5.93,
+          "resten_av_aaret": 10.15
+        }
+      },
+      "kapasitet_eller_effekt": {
+        "modell": "pris_ganger_kw",
+        "grunnlag": "hoeyeste_time_i_hoeglast",
+        "maaleintervall_min": 60,
+        "kr_per_kw_mnd": {
+          "sommermaaneder": [
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10
+          ],
+          "sommer": 18,
+          "resten_av_aaret": 39
+        },
+        "effektkalender": null
+      },
+      "enova_800_per_aar": "inkludert_i_trinn_eller_fastledd",
+      "sperre": "Bekreft høglastvinduet for denne tariffen; ikke anta samme regel som småkundens dagpris.",
+      "reaktivt": {
+        "tillatt_reaktiv_andel_av_aktiv": 0.5,
+        "ore_per_kvarh": 5.13,
+        "kr_per_kvar_mnd": 5.45,
+        "bruk": "verifiser dimensjonerende mengde med målinger/faktura"
+      },
+      "enova_ekstra_kr_per_aar": 0,
+      "id": "NV.HS1:hele_nettomraadet:2026-01-01"
+    },
+    {
+      "produkt": "NV.T5",
+      "omraadeversjon": "hele_nettomraadet",
+      "dekket_fra": "2026-01-01",
+      "dekket_til_eksklusiv": "2026-07-01",
+      "kilder": [
+        "nv1"
+      ],
+      "status": "kildebelagt",
+      "fastledd": {
+        "kr_per_aar": 14845
+      },
+      "energiledd_uttak": {
+        "modell": "sesong",
+        "ore_per_kwh": {
+          "sommermaaneder": [
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10
+          ],
+          "sommer": 5.4,
+          "resten_av_aaret": 9.23
+        }
+      },
+      "kapasitet_eller_effekt": {
+        "modell": "pris_ganger_kw",
+        "grunnlag": "paastemplet_kw_avtalt_anlegg",
+        "kr_per_kw_mnd": 1
+      },
+      "enova_800_per_aar": "inkludert_i_trinn_eller_fastledd",
+      "merknad": "Ingen besparelse i effektleddet ved å kutte en målt forbrukstopp hvis den påstemplede effekten er uendret.",
+      "enova_ekstra_kr_per_aar": 0,
+      "id": "NV.T5:hele_nettomraadet:2026-01-01"
+    },
+    {
+      "produkt": "NV.T6",
+      "omraadeversjon": "hele_nettomraadet",
+      "dekket_fra": "2026-01-01",
+      "dekket_til_eksklusiv": "2026-07-01",
+      "kilder": [
+        "nv1"
+      ],
+      "status": "kildebelagt",
+      "fastledd": {
+        "kr_per_aar": 14845
+      },
+      "energiledd_uttak": {
+        "modell": "sesong",
+        "ore_per_kwh": {
+          "sommermaaneder": [
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10
+          ],
+          "sommer": 5.4,
+          "resten_av_aaret": 9.23
+        }
+      },
+      "kapasitet_eller_effekt": {
+        "modell": "pris_ganger_kw",
+        "grunnlag": "paastemplet_kw_avtalt_anlegg",
+        "kr_per_kw_mnd": 3
+      },
+      "enova_800_per_aar": "inkludert_i_trinn_eller_fastledd",
+      "merknad": "Ingen besparelse i effektleddet ved å kutte en målt forbrukstopp hvis den påstemplede effekten er uendret.",
+      "enova_ekstra_kr_per_aar": 0,
+      "id": "NV.T6:hele_nettomraadet:2026-01-01"
+    },
+    {
+      "produkt": "NV.K",
+      "omraadeversjon": "hele_nettomraadet",
+      "dekket_fra": "2026-07-01",
+      "dekket_til_eksklusiv": null,
+      "kilder": [
+        "nv7k",
+        "nv7kontroll"
+      ],
+      "status": "kildebelagt",
+      "fastledd": {
+        "kr_per_mnd": 0
+      },
+      "energiledd_uttak": {
+        "modell": "dag_natt",
+        "dag_fra": "06:00",
+        "dag_til_eksklusiv": "22:00",
+        "dag_gjelder": "alle_dager",
+        "dag_ore_per_kwh": 31.23,
+        "ellers_ore_per_kwh": 25.23
+      },
+      "kapasitet_eller_effekt": {
+        "modell": "ett_kapasitetstrinn",
+        "grunnlag": "snitt_av_tre_hoeyeste_doegnmakser_ulike_datoer",
+        "maaleintervall_min": 60,
+        "grenser": "nedre_inklusiv",
+        "trinn": [
+          {
+            "til_kw": 2,
+            "kr_per_mnd": 219
+          },
+          {
+            "til_kw": 5,
+            "kr_per_mnd": 439
+          },
+          {
+            "til_kw": 10,
+            "kr_per_mnd": 525
+          },
+          {
+            "til_kw": 15,
+            "kr_per_mnd": 763
+          },
+          {
+            "til_kw": 20,
+            "kr_per_mnd": 893
+          },
+          {
+            "til_kw": 25,
+            "kr_per_mnd": 1031
+          },
+          {
+            "til_kw": 50,
+            "kr_per_mnd": 1915
+          },
+          {
+            "til_kw": 75,
+            "kr_per_mnd": 2803
+          },
+          {
+            "til_kw": 100,
+            "kr_per_mnd": 3689
+          },
+          {
+            "til_kw": null,
+            "kr_per_mnd": 7190
+          }
+        ]
+      },
+      "enova_800_per_aar": "inkludert_i_trinn_eller_fastledd",
+      "publisert_foer_normalisering": {
+        "tabell_dag_ore_per_kwh": 31.23,
+        "tabell_natt_ore_per_kwh": 25.23
+      },
+      "enova_ekstra_kr_per_aar": 0,
+      "id": "NV.K:hele_nettomraadet:2026-07-01",
+      "merknad": "Ingress i næringsprislisten sier ekskl. andre avgifter enn Enova i kapasitetsleddet. En mellomtittel antyder det motsatte. Kontroll mot privatlisten: 49,20/1,25 − 7,13 − 1,00 = 31,23 dag; 41,70/1,25 − 7,13 − 1,00 = 25,23 natt. Næringssatsene samsvarer nøyaktig med begge nettprisene uten elavgift og mva. Faktura avgjør ved faktisk avvik."
+    },
+    {
+      "produkt": "NV.L",
+      "omraadeversjon": "hele_nettomraadet",
+      "dekket_fra": "2026-07-01",
+      "dekket_til_eksklusiv": null,
+      "kilder": [
+        "nv7s",
+        "nv1"
+      ],
+      "status": "maa_avklares",
+      "fastledd": {
+        "kr_per_aar": 17654
+      },
+      "energiledd_uttak": {
+        "modell": "lik_hele_doegnet",
+        "ore_per_kwh": 10.2
+      },
+      "kapasitet_eller_effekt": {
+        "modell": "marginale_effektblokker",
+        "grunnlag": "hoeyeste_time_i_hoeglast",
+        "maaleintervall_min": 60,
+        "blokker": [
+          {
+            "til_kw": 100,
+            "kr_per_kw_mnd": 91
+          },
+          {
+            "til_kw": 200,
+            "kr_per_kw_mnd": 82
+          },
+          {
+            "til_kw": 500,
+            "kr_per_kw_mnd": 68
+          },
+          {
+            "til_kw": null,
+            "kr_per_kw_mnd": 57
+          }
+        ],
+        "effektkalender": null
+      },
+      "enova_800_per_aar": "inkludert_i_trinn_eller_fastledd",
+      "sperre": "Januararket nevner maksimum i høglast, men uten entydig kalender. Verifiser vindu, og for T3T at blokkene avregnes marginalt, før aktivering. Ikke bruk tilfeldig 06–21 eller 24 timer.",
+      "reaktivt": {
+        "tillatt_reaktiv_andel_av_aktiv": 0.5,
+        "ore_per_kvarh": 6.16,
+        "kr_per_kvar_mnd": 6.54,
+        "bruk": "verifiser dimensjonerende mengde med målinger/faktura"
+      },
+      "enova_ekstra_kr_per_aar": 0,
+      "id": "NV.L:hele_nettomraadet:2026-07-01"
+    },
+    {
+      "produkt": "NV.H",
+      "omraadeversjon": "hele_nettomraadet",
+      "dekket_fra": "2026-07-01",
+      "dekket_til_eksklusiv": null,
+      "kilder": [
+        "nv7s"
+      ],
+      "status": "maa_avklares",
+      "fastledd": {
+        "kr_per_aar": 34587
+      },
+      "energiledd_uttak": {
+        "modell": "sesong",
+        "ore_per_kwh": {
+          "sommermaaneder": [
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10
+          ],
+          "sommer": 7.12,
+          "resten_av_aaret": 12.18
+        }
+      },
+      "kapasitet_eller_effekt": {
+        "modell": "pris_ganger_kw",
+        "grunnlag": "hoeyeste_time_i_hoeglast",
+        "maaleintervall_min": 60,
+        "kr_per_kw_mnd": {
+          "sommermaaneder": [
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10
+          ],
+          "sommer": 41,
+          "resten_av_aaret": 80
+        },
+        "effektkalender": null
+      },
+      "enova_800_per_aar": "inkludert_i_trinn_eller_fastledd",
+      "sperre": "Bekreft høglastvinduet for denne tariffen; ikke anta samme regel som småkundens dagpris.",
+      "reaktivt": {
+        "tillatt_reaktiv_andel_av_aktiv": 0.5,
+        "ore_per_kvarh": 6.16,
+        "kr_per_kvar_mnd": 6.54,
+        "bruk": "verifiser dimensjonerende mengde med målinger/faktura"
+      },
+      "enova_ekstra_kr_per_aar": 0,
+      "id": "NV.H:hele_nettomraadet:2026-07-01"
+    },
+    {
+      "produkt": "NV.HS1",
+      "omraadeversjon": "hele_nettomraadet",
+      "dekket_fra": "2026-07-01",
+      "dekket_til_eksklusiv": null,
+      "kilder": [
+        "nv7s"
+      ],
+      "status": "maa_avklares",
+      "fastledd": {
+        "kr_per_aar": 34587
+      },
+      "energiledd_uttak": {
+        "modell": "sesong",
+        "ore_per_kwh": {
+          "sommermaaneder": [
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10
+          ],
+          "sommer": 7.12,
+          "resten_av_aaret": 12.18
+        }
+      },
+      "kapasitet_eller_effekt": {
+        "modell": "pris_ganger_kw",
+        "grunnlag": "hoeyeste_time_i_hoeglast",
+        "maaleintervall_min": 60,
+        "kr_per_kw_mnd": {
+          "sommermaaneder": [
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10
+          ],
+          "sommer": 22,
+          "resten_av_aaret": 47
+        },
+        "effektkalender": null
+      },
+      "enova_800_per_aar": "inkludert_i_trinn_eller_fastledd",
+      "sperre": "Bekreft høglastvinduet for denne tariffen; ikke anta samme regel som småkundens dagpris.",
+      "reaktivt": {
+        "tillatt_reaktiv_andel_av_aktiv": 0.5,
+        "ore_per_kvarh": 6.16,
+        "kr_per_kvar_mnd": 6.54,
+        "bruk": "verifiser dimensjonerende mengde med målinger/faktura"
+      },
+      "enova_ekstra_kr_per_aar": 0,
+      "id": "NV.HS1:hele_nettomraadet:2026-07-01"
+    },
+    {
+      "produkt": "NV.T5",
+      "omraadeversjon": "hele_nettomraadet",
+      "dekket_fra": "2026-07-01",
+      "dekket_til_eksklusiv": null,
+      "kilder": [
+        "nv7s"
+      ],
+      "status": "kildebelagt",
+      "fastledd": {
+        "kr_per_aar": 17654
+      },
+      "energiledd_uttak": {
+        "modell": "sesong",
+        "ore_per_kwh": {
+          "sommermaaneder": [
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10
+          ],
+          "sommer": 6.48,
+          "resten_av_aaret": 11.07
+        }
+      },
+      "kapasitet_eller_effekt": {
+        "modell": "pris_ganger_kw",
+        "grunnlag": "paastemplet_kw_avtalt_anlegg",
+        "kr_per_kw_mnd": 1
+      },
+      "enova_800_per_aar": "inkludert_i_trinn_eller_fastledd",
+      "merknad": "Ingen besparelse i effektleddet ved å kutte en målt forbrukstopp hvis den påstemplede effekten er uendret.",
+      "enova_ekstra_kr_per_aar": 0,
+      "id": "NV.T5:hele_nettomraadet:2026-07-01"
+    },
+    {
+      "produkt": "NV.T6",
+      "omraadeversjon": "hele_nettomraadet",
+      "dekket_fra": "2026-07-01",
+      "dekket_til_eksklusiv": null,
+      "kilder": [
+        "nv7s"
+      ],
+      "status": "kildebelagt",
+      "fastledd": {
+        "kr_per_aar": 17654
+      },
+      "energiledd_uttak": {
+        "modell": "sesong",
+        "ore_per_kwh": {
+          "sommermaaneder": [
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10
+          ],
+          "sommer": 6.48,
+          "resten_av_aaret": 11.07
+        }
+      },
+      "kapasitet_eller_effekt": {
+        "modell": "pris_ganger_kw",
+        "grunnlag": "paastemplet_kw_avtalt_anlegg",
+        "kr_per_kw_mnd": 3
+      },
+      "enova_800_per_aar": "inkludert_i_trinn_eller_fastledd",
+      "merknad": "Ingen besparelse i effektleddet ved å kutte en målt forbrukstopp hvis den påstemplede effekten er uendret.",
+      "enova_ekstra_kr_per_aar": 0,
+      "id": "NV.T6:hele_nettomraadet:2026-07-01"
+    },
+    {
+      "produkt": "ET.K",
+      "omraadeversjon": "hele_nettomraadet",
+      "dekket_fra": "2026-01-01",
+      "dekket_til_eksklusiv": "2026-05-01",
+      "kilder": [
+        "et1"
+      ],
+      "status": "kildebelagt",
+      "fastledd": {
+        "kr_per_mnd": 0
+      },
+      "energiledd_uttak": {
+        "modell": "dag_natt",
+        "dag_fra": "06:00",
+        "dag_til_eksklusiv": "22:00",
+        "dag_gjelder": "mandag_fredag_unntatt_helligdager",
+        "dag_ore_per_kwh": 24.55,
+        "ellers_ore_per_kwh": 17.59
+      },
+      "kapasitet_eller_effekt": {
+        "modell": "ett_kapasitetstrinn",
+        "grunnlag": "snitt_av_tre_hoeyeste_doegnmakser_ulike_datoer",
+        "maaleintervall_min": 60,
+        "grenser": "overlapp_i_ark_bekreft_ved_eksakt_grense",
+        "trinn": [
+          {
+            "til_kw": 2,
+            "kr_per_mnd": 255.3
+          },
+          {
+            "til_kw": 5,
+            "kr_per_mnd": 382.9
+          },
+          {
+            "til_kw": 10,
+            "kr_per_mnd": 498.9
+          },
+          {
+            "til_kw": 15,
+            "kr_per_mnd": 615
+          },
+          {
+            "til_kw": 20,
+            "kr_per_mnd": 812.3
+          },
+          {
+            "til_kw": 25,
+            "kr_per_mnd": 1015.4
+          },
+          {
+            "til_kw": 50,
+            "kr_per_mnd": 1508.5
+          },
+          {
+            "til_kw": 75,
+            "kr_per_mnd": 2320.8
+          },
+          {
+            "til_kw": 100,
+            "kr_per_mnd": 2901
+          },
+          {
+            "til_kw": 3000,
+            "kr_per_mnd": 3481.2
+          }
+        ]
+      },
+      "enova_800_per_aar": "kommer_i_tillegg",
+      "merknad": "Bruk eks. mva-kolonnen. Ikke utled sats fra inkl. mva-kolonnen (avvik i enkelte rader). Over siste publiserte trinn krever egen avklaring.",
+      "id": "ET.K:hele_nettomraadet:2026-01-01"
+    },
+    {
+      "produkt": "ET.S",
+      "omraadeversjon": "hele_nettomraadet",
+      "dekket_fra": "2026-01-01",
+      "dekket_til_eksklusiv": "2026-05-01",
+      "kilder": [
+        "et1"
+      ],
+      "status": "maa_avklares",
+      "fastledd": {
+        "kr_per_mnd": 928.3
+      },
+      "energiledd_uttak": {
+        "modell": "lik_hele_doegnet",
+        "ore_per_kwh": 10.16
+      },
+      "kapasitet_eller_effekt": {
+        "modell": "pris_ganger_kw",
+        "grunnlag": "maanedens_effekttopp",
+        "maaleintervall_min": null,
+        "kr_per_kw_mnd": {
+          "sommermaaneder": [
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ],
+          "sommer": 41.77,
+          "resten_av_aaret": 53.36
+        }
+      },
+      "enova_800_per_aar": "kommer_i_tillegg",
+      "merknad": "Effekttopp per måned står i næringstabellen. Hvis kundens faktura definerer annen topp enn klokketime/måned, bruk avtalt beregningsregel. Ikke bruk småkundenes trinn her.",
+      "sperre": "Bekreft om månedens effekt for storkunder måles som høyeste klokketimemiddel, og hvilke timer som teller. Regelen for de tre døgnmaksene er oppgitt for fastleddet hos småkunder.",
+      "id": "ET.S:hele_nettomraadet:2026-01-01"
+    },
+    {
+      "produkt": "ET.K",
+      "omraadeversjon": "hele_nettomraadet",
+      "dekket_fra": "2026-05-01",
+      "dekket_til_eksklusiv": "2026-10-01",
+      "kilder": [
+        "et5"
+      ],
+      "status": "kildebelagt",
+      "fastledd": {
+        "kr_per_mnd": 0
+      },
+      "energiledd_uttak": {
+        "modell": "dag_natt",
+        "dag_fra": "06:00",
+        "dag_til_eksklusiv": "22:00",
+        "dag_gjelder": "mandag_fredag_unntatt_helligdager",
+        "dag_ore_per_kwh": 25.55,
+        "ellers_ore_per_kwh": 18.59
+      },
+      "kapasitet_eller_effekt": {
+        "modell": "ett_kapasitetstrinn",
+        "grunnlag": "snitt_av_tre_hoeyeste_doegnmakser_ulike_datoer",
+        "maaleintervall_min": 60,
+        "grenser": "overlapp_i_ark_bekreft_ved_eksakt_grense",
+        "trinn": [
+          {
+            "til_kw": 2,
+            "kr_per_mnd": 280
+          },
+          {
+            "til_kw": 5,
+            "kr_per_mnd": 420
+          },
+          {
+            "til_kw": 10,
+            "kr_per_mnd": 498.9
+          },
+          {
+            "til_kw": 15,
+            "kr_per_mnd": 615
+          },
+          {
+            "til_kw": 20,
+            "kr_per_mnd": 812.3
+          },
+          {
+            "til_kw": 25,
+            "kr_per_mnd": 1015.4
+          },
+          {
+            "til_kw": 50,
+            "kr_per_mnd": 1508.5
+          },
+          {
+            "til_kw": 75,
+            "kr_per_mnd": 2320.8
+          },
+          {
+            "til_kw": 100,
+            "kr_per_mnd": 2901
+          },
+          {
+            "til_kw": 3000,
+            "kr_per_mnd": 3481.2
+          }
+        ]
+      },
+      "enova_800_per_aar": "kommer_i_tillegg",
+      "merknad": "Bruk eks. mva-kolonnen. Ikke utled sats fra inkl. mva-kolonnen (avvik i enkelte rader). Over siste publiserte trinn krever egen avklaring.",
+      "id": "ET.K:hele_nettomraadet:2026-05-01"
+    },
+    {
+      "produkt": "ET.S",
+      "omraadeversjon": "hele_nettomraadet",
+      "dekket_fra": "2026-05-01",
+      "dekket_til_eksklusiv": "2026-10-01",
+      "kilder": [
+        "et5"
+      ],
+      "status": "maa_avklares",
+      "fastledd": {
+        "kr_per_mnd": 928.3
+      },
+      "energiledd_uttak": {
+        "modell": "lik_hele_doegnet",
+        "ore_per_kwh": 10.16
+      },
+      "kapasitet_eller_effekt": {
+        "modell": "pris_ganger_kw",
+        "grunnlag": "maanedens_effekttopp",
+        "maaleintervall_min": null,
+        "kr_per_kw_mnd": {
+          "sommermaaneder": [
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ],
+          "sommer": 41.77,
+          "resten_av_aaret": 53.36
+        }
+      },
+      "enova_800_per_aar": "kommer_i_tillegg",
+      "merknad": "Effekttopp per måned står i næringstabellen. Hvis kundens faktura definerer annen topp enn klokketime/måned, bruk avtalt beregningsregel. Ikke bruk småkundenes trinn her.",
+      "sperre": "Bekreft om månedens effekt for storkunder måles som høyeste klokketimemiddel, og hvilke timer som teller. Regelen for de tre døgnmaksene er oppgitt for fastleddet hos småkunder.",
+      "id": "ET.S:hele_nettomraadet:2026-05-01"
+    },
+    {
+      "produkt": "ET.K",
+      "omraadeversjon": "hele_nettomraadet",
+      "dekket_fra": "2026-10-01",
+      "dekket_til_eksklusiv": null,
+      "kilder": [
+        "et10"
+      ],
+      "status": "kildebelagt",
+      "fastledd": {
+        "kr_per_mnd": 0
+      },
+      "energiledd_uttak": {
+        "modell": "dag_natt",
+        "dag_fra": "06:00",
+        "dag_til_eksklusiv": "22:00",
+        "dag_gjelder": "mandag_fredag_unntatt_helligdager",
+        "dag_ore_per_kwh": 27.55,
+        "ellers_ore_per_kwh": 20.59
+      },
+      "kapasitet_eller_effekt": {
+        "modell": "ett_kapasitetstrinn",
+        "grunnlag": "snitt_av_tre_hoeyeste_doegnmakser_ulike_datoer",
+        "maaleintervall_min": 60,
+        "grenser": "overlapp_i_ark_bekreft_ved_eksakt_grense",
+        "trinn": [
+          {
+            "til_kw": 2,
+            "kr_per_mnd": 280
+          },
+          {
+            "til_kw": 5,
+            "kr_per_mnd": 420
+          },
+          {
+            "til_kw": 10,
+            "kr_per_mnd": 498.9
+          },
+          {
+            "til_kw": 15,
+            "kr_per_mnd": 615
+          },
+          {
+            "til_kw": 20,
+            "kr_per_mnd": 812.3
+          },
+          {
+            "til_kw": 25,
+            "kr_per_mnd": 1015.4
+          },
+          {
+            "til_kw": 50,
+            "kr_per_mnd": 1508.5
+          },
+          {
+            "til_kw": 75,
+            "kr_per_mnd": 2320.8
+          },
+          {
+            "til_kw": 100,
+            "kr_per_mnd": 2901
+          },
+          {
+            "til_kw": 3000,
+            "kr_per_mnd": 3481.2
+          }
+        ]
+      },
+      "enova_800_per_aar": "kommer_i_tillegg",
+      "merknad": "Bruk eks. mva-kolonnen. Ikke utled sats fra inkl. mva-kolonnen (avvik i enkelte rader). Over siste publiserte trinn krever egen avklaring.",
+      "id": "ET.K:hele_nettomraadet:2026-10-01"
+    },
+    {
+      "produkt": "ET.S",
+      "omraadeversjon": "hele_nettomraadet",
+      "dekket_fra": "2026-10-01",
+      "dekket_til_eksklusiv": null,
+      "kilder": [
+        "et10"
+      ],
+      "status": "maa_avklares",
+      "fastledd": {
+        "kr_per_mnd": 928.3
+      },
+      "energiledd_uttak": {
+        "modell": "lik_hele_doegnet",
+        "ore_per_kwh": 12.16
+      },
+      "kapasitet_eller_effekt": {
+        "modell": "pris_ganger_kw",
+        "grunnlag": "maanedens_effekttopp",
+        "maaleintervall_min": null,
+        "kr_per_kw_mnd": {
+          "sommermaaneder": [
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ],
+          "sommer": 41.77,
+          "resten_av_aaret": 53.36
+        }
+      },
+      "enova_800_per_aar": "kommer_i_tillegg",
+      "merknad": "Effekttopp per måned står i næringstabellen. Hvis kundens faktura definerer annen topp enn klokketime/måned, bruk avtalt beregningsregel. Ikke bruk småkundenes trinn her.",
+      "sperre": "Bekreft om månedens effekt for storkunder måles som høyeste klokketimemiddel, og hvilke timer som teller. Regelen for de tre døgnmaksene er oppgitt for fastleddet hos småkunder.",
+      "id": "ET.S:hele_nettomraadet:2026-10-01"
+    },
+    {
+      "produkt": "VV.K",
+      "omraadeversjon": "hele_nettomraadet",
+      "dekket_fra": "2026-01-01",
+      "dekket_til_eksklusiv": null,
+      "kilder": [
+        "vv"
+      ],
+      "status": "kildebelagt",
+      "fastledd": {
+        "kr_per_mnd": 0
+      },
+      "energiledd_uttak": {
+        "modell": "dag_natt",
+        "dag_fra": "06:00",
+        "dag_til_eksklusiv": "22:00",
+        "dag_gjelder": "alle_dager",
+        "dag_ore_per_kwh": 25.2,
+        "ellers_ore_per_kwh": 15.8
+      },
+      "kapasitet_eller_effekt": {
+        "modell": "ett_kapasitetstrinn",
+        "grunnlag": "snitt_av_tre_hoeyeste_doegnmakser_ulike_datoer",
+        "maaleintervall_min": 60,
+        "grenser": "oevre_inklusiv",
+        "trinn": [
+          {
+            "til_kw": 2,
+            "kr_per_mnd": 201
+          },
+          {
+            "til_kw": 5,
+            "kr_per_mnd": 261
+          },
+          {
+            "til_kw": 10,
+            "kr_per_mnd": 363
+          },
+          {
+            "til_kw": 15,
+            "kr_per_mnd": 465
+          },
+          {
+            "til_kw": 20,
+            "kr_per_mnd": 568
+          },
+          {
+            "til_kw": 25,
+            "kr_per_mnd": 668
+          },
+          {
+            "til_kw": 30,
+            "kr_per_mnd": 770
+          },
+          {
+            "til_kw": 40,
+            "kr_per_mnd": 974
+          },
+          {
+            "til_kw": 50,
+            "kr_per_mnd": 1245
+          },
+          {
+            "til_kw": 75,
+            "kr_per_mnd": 1683
+          },
+          {
+            "til_kw": 100,
+            "kr_per_mnd": 2191
+          },
+          {
+            "til_kw": 125,
+            "kr_per_mnd": 2697
+          },
+          {
+            "til_kw": 150,
+            "kr_per_mnd": 3206
+          },
+          {
+            "til_kw": 200,
+            "kr_per_mnd": 4220
+          },
+          {
+            "til_kw": 300,
+            "kr_per_mnd": 5841
+          },
+          {
+            "til_kw": 400,
+            "kr_per_mnd": 8165
+          },
+          {
+            "til_kw": 1000,
+            "kr_per_mnd": 16390
+          }
+        ]
+      },
+      "enova_800_per_aar": "kommer_i_tillegg",
+      "merknad": "Tabellen sier «til og med», med eksempler 2,00/2,01. Ingen dokumentert sats over 1000 kW. Ikke rund opp til neste trinn ved likhet.",
+      "id": "VV.K:hele_nettomraadet:2026-01-01"
+    },
+    {
+      "produkt": "VV.L",
+      "omraadeversjon": "hele_nettomraadet",
+      "dekket_fra": "2026-01-01",
+      "dekket_til_eksklusiv": null,
+      "kilder": [
+        "vv"
+      ],
+      "status": "kildebelagt",
+      "fastledd": {
+        "kr_per_mnd": 617.4
+      },
+      "energiledd_uttak": {
+        "modell": "dag_natt",
+        "dag_fra": "06:00",
+        "dag_til_eksklusiv": "22:00",
+        "dag_gjelder": "alle_dager",
+        "dag_ore_per_kwh": 12.5,
+        "ellers_ore_per_kwh": 7.4
+      },
+      "kapasitet_eller_effekt": {
+        "modell": "pris_ganger_kw",
+        "grunnlag": "hoeyeste_klokketime_i_maaneden",
+        "maaleintervall_min": 60,
+        "kr_per_kw_mnd": 55.57,
+        "maanedsfaktorer_jan_des": [
+          1,
+          1,
+          0.9,
+          0.8,
+          0.7,
+          0.6,
+          0.6,
+          0.7,
+          0.8,
+          0.9,
+          1,
+          1
+        ]
+      },
+      "enova_800_per_aar": "kommer_i_tillegg",
+      "reaktivt": {
+        "cos_phi_under": 0.95,
+        "ore_per_kvarh": 11,
+        "bruk": "etter nettavtalen; ikke anslå kVArh fra kWh"
+      },
+      "id": "VV.L:hele_nettomraadet:2026-01-01"
+    },
+    {
+      "produkt": "VV.H",
+      "omraadeversjon": "hele_nettomraadet",
+      "dekket_fra": "2026-01-01",
+      "dekket_til_eksklusiv": null,
+      "kilder": [
+        "vv"
+      ],
+      "status": "kildebelagt",
+      "fastledd": {
+        "kr_per_mnd": 1234.8
+      },
+      "energiledd_uttak": {
+        "modell": "dag_natt",
+        "dag_fra": "06:00",
+        "dag_til_eksklusiv": "22:00",
+        "dag_gjelder": "alle_dager",
+        "dag_ore_per_kwh": 4.6,
+        "ellers_ore_per_kwh": 2.4
+      },
+      "kapasitet_eller_effekt": {
+        "modell": "pris_ganger_kw",
+        "grunnlag": "hoeyeste_klokketime_i_maaneden",
+        "maaleintervall_min": 60,
+        "kr_per_kw_mnd": 30.87,
+        "maanedsfaktorer_jan_des": [
+          1,
+          1,
+          0.9,
+          0.8,
+          0.7,
+          0.6,
+          0.6,
+          0.7,
+          0.8,
+          0.9,
+          1,
+          1
+        ]
+      },
+      "enova_800_per_aar": "kommer_i_tillegg",
+      "reaktivt": {
+        "cos_phi_under": 0.95,
+        "ore_per_kvarh": 11,
+        "bruk": "etter nettavtalen; ikke anslå kVArh fra kWh"
+      },
+      "id": "VV.H:hele_nettomraadet:2026-01-01"
+    },
+    {
+      "produkt": "FA.K",
+      "omraadeversjon": "hele_nettomraadet",
+      "dekket_fra": "2026-01-01",
+      "dekket_til_eksklusiv": "2026-07-01",
+      "kilder": [
+        "faark",
+        "fainfo"
+      ],
+      "status": "kildebelagt",
+      "fastledd": {
+        "kr_per_mnd": 0
+      },
+      "energiledd_uttak": {
+        "modell": "dag_natt",
+        "dag_fra": "06:00",
+        "dag_til_eksklusiv": "22:00",
+        "dag_gjelder": "mandag_fredag",
+        "dag_ore_per_kwh": 28,
+        "ellers_ore_per_kwh": 20,
+        "helligdag_paa_ukedag": "maa_bekreftes_ved_berorte_timer"
+      },
+      "kapasitet_eller_effekt": {
+        "modell": "ett_kapasitetstrinn",
+        "grunnlag": "snitt_av_tre_hoeyeste_doegnmakser_ulike_datoer",
+        "maaleintervall_min": 60,
+        "grenser": "nedre_inklusiv",
+        "trinn": [
+          {
+            "til_kw": 5,
+            "kr_per_mnd": 288
+          },
+          {
+            "til_kw": 10,
+            "kr_per_mnd": 368
+          },
+          {
+            "til_kw": 15,
+            "kr_per_mnd": 448
+          },
+          {
+            "til_kw": 20,
+            "kr_per_mnd": 528
+          },
+          {
+            "til_kw": 25,
+            "kr_per_mnd": 608
+          },
+          {
+            "til_kw": 50,
+            "kr_per_mnd": 1760
+          },
+          {
+            "til_kw": 75,
+            "kr_per_mnd": 2560
+          },
+          {
+            "til_kw": 100,
+            "kr_per_mnd": 3360
+          },
+          {
+            "til_kw": null,
+            "kr_per_mnd": 4160
+          }
+        ]
+      },
+      "enova_800_per_aar": "kommer_i_tillegg",
+      "merknad": "Prisarket oppgir natt/helg. Be om bekreftelse ved helligdager på ukedager; ikke bruk Elvias kalender automatisk.",
+      "id": "FA.K:hele_nettomraadet:2026-01-01"
+    },
+    {
+      "produkt": "FA.L",
+      "omraadeversjon": "hele_nettomraadet",
+      "dekket_fra": "2026-01-01",
+      "dekket_til_eksklusiv": "2026-07-01",
+      "kilder": [
+        "faark",
+        "fainfo"
+      ],
+      "status": "maa_avklares",
+      "fastledd": {
+        "kr_per_aar": 21000
+      },
+      "energiledd_uttak": {
+        "modell": "sesong",
+        "ore_per_kwh": {
+          "sommer": 11,
+          "vinter": 12,
+          "sommermaaneder": null
+        }
+      },
+      "kapasitet_eller_effekt": {
+        "modell": "effektintervaller_i_tariffark",
+        "grenser_kw": [
+          100,
+          300,
+          500,
+          null
+        ],
+        "vinter_kr_per_kw_mnd": [
+          78,
+          71,
+          67,
+          56
+        ],
+        "sommer_kr_per_kw_mnd": [
+          70,
+          65,
+          61,
+          50
+        ],
+        "sammenstilling": null
+      },
+      "enova_800_per_aar": "kommer_i_tillegg",
+      "sperre": "Prisene er publisert. Bekreft sesongmåneder og hvilken topp som faktureres i distribusjonsnettet. For gammel lavspent, bekreft marginal blokkpris mot pris på hele toppen. Regionalnettet er ikke samme produkt.",
+      "reaktivt": {
+        "sommer": 27,
+        "vinter": 32,
+        "raa_enhet_i_kilden": "kr/kW/mnd ved reaktiv effekt",
+        "bruk": "avklar reaktivt målegrunnlag, terskel og enhet før fakturering"
+      },
+      "id": "FA.L:hele_nettomraadet:2026-01-01"
+    },
+    {
+      "produkt": "FA.H",
+      "omraadeversjon": "hele_nettomraadet",
+      "dekket_fra": "2026-01-01",
+      "dekket_til_eksklusiv": "2026-07-01",
+      "kilder": [
+        "faark",
+        "fainfo"
+      ],
+      "status": "maa_avklares",
+      "fastledd": {
+        "kr_per_aar": 21000
+      },
+      "energiledd_uttak": {
+        "modell": "sesong",
+        "ore_per_kwh": {
+          "sommer": 10,
+          "vinter": 11,
+          "sommermaaneder": null
+        }
+      },
+      "kapasitet_eller_effekt": {
+        "modell": "pris_ganger_kw",
+        "grunnlag": null,
+        "kr_per_kw_mnd": {
+          "sommer": 50,
+          "vinter": 56,
+          "sommermaaneder": null
+        }
+      },
+      "enova_800_per_aar": "kommer_i_tillegg",
+      "sperre": "Prisene er publisert. Bekreft sesongmåneder og hvilken topp som faktureres i distribusjonsnettet. For gammel lavspent, bekreft marginal blokkpris mot pris på hele toppen. Regionalnettet er ikke samme produkt.",
+      "reaktivt": {
+        "sommer": 27,
+        "vinter": 32,
+        "raa_enhet_i_kilden": "kr/kW/mnd ved reaktiv effekt",
+        "bruk": "avklar reaktivt målegrunnlag, terskel og enhet før fakturering"
+      },
+      "id": "FA.H:hele_nettomraadet:2026-01-01"
+    },
+    {
+      "produkt": "FA.K",
+      "omraadeversjon": "hele_nettomraadet",
+      "dekket_fra": "2026-07-01",
+      "dekket_til_eksklusiv": null,
+      "kilder": [
+        "fa7"
+      ],
+      "status": "kildebelagt",
+      "fastledd": {
+        "kr_per_mnd": 0
+      },
+      "energiledd_uttak": {
+        "modell": "dag_natt",
+        "dag_fra": "06:00",
+        "dag_til_eksklusiv": "22:00",
+        "dag_gjelder": "mandag_fredag",
+        "dag_ore_per_kwh": 28,
+        "ellers_ore_per_kwh": 20,
+        "helligdag_paa_ukedag": "maa_bekreftes_ved_berorte_timer"
+      },
+      "kapasitet_eller_effekt": {
+        "modell": "ett_kapasitetstrinn",
+        "grunnlag": "snitt_av_tre_hoeyeste_doegnmakser_ulike_datoer",
+        "maaleintervall_min": 60,
+        "grenser": "nedre_inklusiv",
+        "trinn": [
+          {
+            "til_kw": 5,
+            "kr_per_mnd": 288
+          },
+          {
+            "til_kw": 10,
+            "kr_per_mnd": 368
+          },
+          {
+            "til_kw": 15,
+            "kr_per_mnd": 448
+          },
+          {
+            "til_kw": 20,
+            "kr_per_mnd": 528
+          },
+          {
+            "til_kw": 25,
+            "kr_per_mnd": 608
+          },
+          {
+            "til_kw": 50,
+            "kr_per_mnd": 1760
+          },
+          {
+            "til_kw": 75,
+            "kr_per_mnd": 2560
+          },
+          {
+            "til_kw": 100,
+            "kr_per_mnd": 3360
+          },
+          {
+            "til_kw": null,
+            "kr_per_mnd": 4160
+          }
+        ]
+      },
+      "enova_800_per_aar": "kommer_i_tillegg",
+      "merknad": "Prisarket oppgir natt/helg. Be om bekreftelse ved helligdager på ukedager; ikke bruk Elvias kalender automatisk.",
+      "id": "FA.K:hele_nettomraadet:2026-07-01"
+    },
+    {
+      "produkt": "FA.L",
+      "omraadeversjon": "hele_nettomraadet",
+      "dekket_fra": "2026-07-01",
+      "dekket_til_eksklusiv": null,
+      "kilder": [
+        "fa7"
+      ],
+      "status": "maa_avklares",
+      "fastledd": {
+        "kr_per_aar": 21000
+      },
+      "energiledd_uttak": {
+        "modell": "sesong",
+        "ore_per_kwh": {
+          "sommer": 11,
+          "vinter": 12,
+          "sommermaaneder": null
+        }
+      },
+      "kapasitet_eller_effekt": {
+        "modell": "pris_ganger_kw",
+        "grunnlag": null,
+        "kr_per_kw_mnd": {
+          "sommer": 45,
+          "vinter": 85,
+          "sommermaaneder": null
+        }
+      },
+      "enova_800_per_aar": "kommer_i_tillegg",
+      "sperre": "Prisene er publisert. Bekreft sesongmåneder og hvilken topp som faktureres i distribusjonsnettet. For gammel lavspent, bekreft marginal blokkpris mot pris på hele toppen. Regionalnettet er ikke samme produkt.",
+      "reaktivt": {
+        "sommer": 27,
+        "vinter": 32,
+        "raa_enhet_i_kilden": "kr/kW/mnd ved reaktiv effekt",
+        "bruk": "avklar reaktivt målegrunnlag, terskel og enhet før fakturering"
+      },
+      "id": "FA.L:hele_nettomraadet:2026-07-01"
+    },
+    {
+      "produkt": "FA.H",
+      "omraadeversjon": "hele_nettomraadet",
+      "dekket_fra": "2026-07-01",
+      "dekket_til_eksklusiv": null,
+      "kilder": [
+        "fa7"
+      ],
+      "status": "maa_avklares",
+      "fastledd": {
+        "kr_per_aar": 21000
+      },
+      "energiledd_uttak": {
+        "modell": "sesong",
+        "ore_per_kwh": {
+          "sommer": 10,
+          "vinter": 11,
+          "sommermaaneder": null
+        }
+      },
+      "kapasitet_eller_effekt": {
+        "modell": "pris_ganger_kw",
+        "grunnlag": null,
+        "kr_per_kw_mnd": {
+          "sommer": 35,
+          "vinter": 70,
+          "sommermaaneder": null
+        }
+      },
+      "enova_800_per_aar": "kommer_i_tillegg",
+      "sperre": "Prisene er publisert. Bekreft sesongmåneder og hvilken topp som faktureres i distribusjonsnettet. For gammel lavspent, bekreft marginal blokkpris mot pris på hele toppen. Regionalnettet er ikke samme produkt.",
+      "reaktivt": {
+        "sommer": 27,
+        "vinter": 32,
+        "raa_enhet_i_kilden": "kr/kW/mnd ved reaktiv effekt",
+        "bruk": "avklar reaktivt målegrunnlag, terskel og enhet før fakturering"
+      },
+      "id": "FA.H:hele_nettomraadet:2026-07-01"
+    }
+  ],
+  "innmating_egen_vurdering": [
+    {
+      "nettselskap": "Elvia",
+      "grunnlag": [
+        "el1",
+        "elprod"
+      ],
+      "dato": "2026: prisarket fra januar og publisert prosumenttabell",
+      "pluss_energiledd_ore_per_kwh": -5,
+      "prosument_energiledd_ore_per_kwh": -5,
+      "prosument_fastledd_ore_per_kwh_aarsgrunnlag": 2.4,
+      "aarsgrunnlag": "midlere årlig innmating",
+      "bruk": "verifiser versjon på forbruksdato og innmatingsklasse"
+    },
+    {
+      "nettselskap": "Glitre Nett",
+      "grunnlag": [
+        "ginn",
+        "gngark"
+      ],
+      "dato": "offentlig tabell funnet 08.11.2026; ikke ikrafttredelsesdato",
+      "pluss_energiledd_ore_per_kwh": -3.2,
+      "prosument_energiledd_ore_per_kwh": -3.2,
+      "prosument_fastledd_ore_per_kwh_aarsgrunnlag": 2.4,
+      "bruk": "bekreft område, historisk startdato, avtaletype og årsgrunnlag. Ikke bruk for hele 2026 i tidligere Norgesnett. Egen marginaltapssats for de store produsentene."
+    },
+    {
+      "nettselskap": "Lede",
+      "grunnlag": [
+        "ld1"
+      ],
+      "dekket_fra": "2026-01-01",
+      "dekket_til_eksklusiv": "2026-05-01",
+      "pluss_energiledd_ore_per_kwh": -5.5,
+      "prosument_energiledd_ore_per_kwh": -5.5,
+      "prosument_fastledd_ore_per_kwh_aarsgrunnlag": 2.4,
+      "produsent_over_1mw_energiledd": "områdepris × avtalt marginaltapssats",
+      "aarsgrunnlag": "gjennomsnittlig innlevering siste 10 år; nytt anlegg bruker forventet årsproduksjon i samsvar med tariffarket",
+      "bruk": "bekreft plusskunde/prosument/produsent; opp til 1 MW og over 1 MW er ulike"
+    },
+    {
+      "nettselskap": "Lede",
+      "grunnlag": [
+        "ld5p"
+      ],
+      "dekket_fra": "2026-05-01",
+      "dekket_til_eksklusiv": null,
+      "pluss_energiledd_ore_per_kwh": -5.5,
+      "prosument_energiledd_ore_per_kwh": -5.5,
+      "prosument_fastledd_ore_per_kwh_aarsgrunnlag": 2.4,
+      "produsent_over_1mw_energiledd": "områdepris × avtalt marginaltapssats",
+      "aarsgrunnlag": "gjennomsnittlig innlevering siste 10 år; nytt anlegg bruker forventet årsproduksjon i samsvar med tariffarket",
+      "bruk": "bekreft plusskunde/prosument/produsent; opp til 1 MW og over 1 MW er ulike"
+    },
+    {
+      "nettselskap": "Linja",
+      "grunnlag": [
+        "lip",
+        "li1",
+        "li7",
+        "rmeprod"
+      ],
+      "dato": "juliark/siden åpnet i november",
+      "publisert_vinterkreditt_ore_per_kwh": -7.2,
+      "vintermaaneder": [
+        10,
+        11,
+        12,
+        1,
+        2,
+        3
+      ],
+      "bruk": "bekreft sommersats og fastleddsgrense før bruk. Nettsidens terskel på 100 MW for fastledd er ikke en pålitelig plusskundegrense; ikke kopier den."
+    },
+    {
+      "nettselskap": "Nordvest Nett",
+      "grunnlag": [
+        "nv7s",
+        "nv1",
+        "rmeprod"
+      ],
+      "bruk": "innmatingsavtale/tariff må innhentes; ukjent er ikke null"
+    },
+    {
+      "nettselskap": "Etna Nett",
+      "grunnlag": [
+        "etprod",
+        "rmeprod"
+      ],
+      "bruk": "hent sats fra avtale for plusskunde/produksjon og kontroller gyldighetsdato; ukjent er ikke null"
+    },
+    {
+      "nettselskap": "Vevig",
+      "grunnlag": [
+        "vvprod"
+      ],
+      "dato": "gjelder ifølge nettsiden ved oppslag 08.11.2026; kontroller historisk gyldighet",
+      "pluss_energiledd_ore_per_kwh": 0,
+      "pluss_fastledd_kr": 0,
+      "bruk": "Vevig opplyser at nettleie for innmating fra plusskunder for tiden ikke har energiledd. Annen produsentklasse må få egne vilkår."
+    },
+    {
+      "nettselskap": "Fagne",
+      "grunnlag": [
+        "faark",
+        "fa7"
+      ],
+      "dato": "2026, bekreft riktig produkt for batteri",
+      "pluss_energiledd_ore_per_kwh": -1.4,
+      "oevrig_fastledd_ore_per_kwh_aarsgrunnlag": 2.4,
+      "bruk": "ordinært produsentprodukt kan ha marginaltapsbasert energiledd, ikke plusskunderabatten. Bruk datert avtale for beregningspris, marginaltapsfaktor og grunnlag."
+    }
+  ],
+  "kilder": {
+    "el1": {
+      "tittel": "Elvia: samlet prisliste fra januar 2026, se tariffblad 2.0, 3.0 og 4.0",
+      "url": "https://www.elvia.no/siteassets/dokumenter/priser/2026/prisoversikt-2026.pdf",
+      "kontrollert": "2026-11-08"
+    },
+    "el7k": {
+      "tittel": "Elvia: næring med årsforbruk under 100 000 kWh, fra juli",
+      "url": "https://www.elvia.no/nettleie/alt-om-nettleiepriser/nettleiepriser-for-bedrifter-og-naring/",
+      "kontrollert": "2026-11-08"
+    },
+    "el7l": {
+      "tittel": "Elvia: tariffblad 3.0, lavspent/fellesmåling fra juli",
+      "url": "https://www.elvia.no/siteassets/dokumenter/priser/2026/1-juli-2026/tariffblad_3_0_stor-naring_effekt_lavspent_20260701.pdf",
+      "kontrollert": "2026-11-08"
+    },
+    "el7h": {
+      "tittel": "Elvia: tariffblad 4.0, høyspent fra juli",
+      "url": "https://www.elvia.no/siteassets/dokumenter/priser/2026/1-juli-2026/tariffblad_4_0_stor-naring_effekt_hoyspent_20260701.pdf",
+      "kontrollert": "2026-11-08"
+    },
+    "gark": {
+      "tittel": "Glitre Nett: priser i tidligere Glitre-områder, inkl. datogrensene",
+      "url": "https://www.glitrenett.no/kunde/nettleie-og-priser/historiske-priser-for-bedriftskunder",
+      "kontrollert": "2026-11-08"
+    },
+    "gk": {
+      "tittel": "Glitre Nett: mindre bedrifter fra 1. oktober",
+      "url": "https://www.glitrenett.no/kunde/nettleie-og-priser/nettleiepriser-mindre-bedriftskunder",
+      "kontrollert": "2026-11-08"
+    },
+    "ge": {
+      "tittel": "Glitre Nett: ordinær og døgndifferensiert effekttariff fra 1. oktober",
+      "url": "https://www.glitrenett.no/kunde/nettleie-og-priser/nettleiepriser-storre-bedriftskunder",
+      "kontrollert": "2026-11-08"
+    },
+    "gng1": {
+      "tittel": "Tidligere Norgesnett: tariffark 1. januar. Næring s. 3 og 5–6; kontroller produkt for boligformål separat",
+      "url": "https://cdn.sanity.io/files/51ryzc9t/production/2088660b644e1dfbf0476cb7efb76978eb2d9a49.pdf",
+      "kontrollert": "2026-11-08"
+    },
+    "gng7": {
+      "tittel": "Tidligere Norgesnett: tariffark 1. juli. Næring s. 2–3",
+      "url": "https://cdn.sanity.io/files/51ryzc9t/production/a6316ec3fcea3f226595beccdbbef7fef32ca631.pdf",
+      "kontrollert": "2026-11-08"
+    },
+    "gngark": {
+      "tittel": "Glitre Nett: eget historisk arkiv for områdene til tidligere Norgesnett",
+      "url": "https://www.glitrenett.no/kunde/nettleie-og-priser/historiske-priser",
+      "kontrollert": "2026-11-08"
+    },
+    "gmerge": {
+      "tittel": "Glitre Nett: fusjon og overgang til felles system",
+      "url": "https://www.glitrenett.no/aktuelt/glitre-nett-vokser",
+      "kontrollert": "2026-11-08"
+    },
+    "ginn": {
+      "tittel": "Glitre Nett: produksjon/innmating – satser",
+      "url": "https://www.glitrenett.no/kunde/nettleie-og-priser/priser-produksjon-av-strom",
+      "kontrollert": "2026-11-08"
+    },
+    "ld1": {
+      "tittel": "Lede: full prisliste januar–april, inkl. innmating",
+      "url": "https://lede.no/getfile.php/1360618-1777540141/Lede/Filer/Prislister/Pris%20nettleie%2001.01.2026%20-%2030.04.2026.pdf",
+      "kontrollert": "2026-11-08"
+    },
+    "ld5": {
+      "tittel": "Lede: ordinære nettleiepriser næring fra mai; sikringsgrenser og trinngrenser",
+      "url": "https://lede.no/priser/nettleie-naeringskunder/",
+      "kontrollert": "2026-11-08"
+    },
+    "ld5p": {
+      "tittel": "Lede: tariffark fra mai, inkl. innmating",
+      "url": "https://lede.no/getfile.php/1360533-1776247188/Lede/Filer/Prislister/Pris%20nettleie%2001.05.2026%20%281%29.pdf",
+      "kontrollert": "2026-11-08"
+    },
+    "ldmåling": {
+      "tittel": "Lede: definisjon av månedens høyeste klokketimemiddel, aktiv og reaktiv måling",
+      "url": "https://lede.no/nettleie/effekttariff/hvordan-males-effekt",
+      "kontrollert": "2026-11-08"
+    },
+    "lip": {
+      "tittel": "Linja: åpne Bedrift – under/over 100 000, med gjeldende og tidligere PDF-er",
+      "url": "https://www.linja.no/nettleige",
+      "kontrollert": "2026-11-08"
+    },
+    "nv1": {
+      "tittel": "Nordvest Nett: overføringstariffer 1. januar 2026",
+      "url": "https://www.nvn.no/download?objectPath=%2Fupload_images%2FD82EAC053BD14819BADF48A9906CC11B.pdf",
+      "kontrollert": "2026-11-08"
+    },
+    "nv7k": {
+      "tittel": "Nordvest Nett: liten bedrift fra juli – merknad om sprik i avgiftsmerkingen",
+      "url": "https://www.nvn.no/nettleige/nettleie-for-bedrift-og-naering",
+      "kontrollert": "2026-11-08"
+    },
+    "nv7s": {
+      "tittel": "Nordvest Nett: stor bedrift fra juli – T3T, HS1/2, T5/6",
+      "url": "https://www.nvn.no/nettleige/nettleie-for-store-bedrifter",
+      "kontrollert": "2026-11-08"
+    },
+    "et1": {
+      "tittel": "Etna Nett: prisliste fra januar (side 3: næring)",
+      "url": "https://etna.no/uploads/Kunde-og-nettleie/Etna-Nett-Nettariff-1-januar-2026.pdf",
+      "kontrollert": "2026-11-08"
+    },
+    "et5": {
+      "tittel": "Etna Nett: prisliste fra mai (side 3: næring)",
+      "url": "https://etna.no/uploads/Etna-Nett-NETTLEIEPRISER-GJELDENE-FRA-1-MAI-2026.pdf",
+      "kontrollert": "2026-11-08"
+    },
+    "et10": {
+      "tittel": "Etna Nett: prisliste fra oktober (side 3: næring)",
+      "url": "https://etna.no/uploads/Etna-Nett-NETTLEIEPRISER-GJELDENE-FRA-1-OKTOBER-2026.pdf",
+      "kontrollert": "2026-11-08"
+    },
+    "vv": {
+      "tittel": "Vevig: standard nettleie næring fra januar – tabeller i original nettside",
+      "url": "https://vevig.no/nettleie-og-vilkar/nettleie-nering/",
+      "kontrollert": "2026-11-08"
+    },
+    "fa7": {
+      "tittel": "Fagne: priser næringskunder fra juli og vilkår for innmating",
+      "url": "https://fagne.no/kunde-og-nettleie/nettleie-priser-og-vilkar/naeringskunder/",
+      "kontrollert": "2026-11-08"
+    },
+    "fainfo": {
+      "tittel": "Fagne: nyttårsmelding om uendret tariffnivå, ikke et fullstendig tariffark",
+      "url": "https://fagne.no/fagne-beholder-nettleien-uendret-fra-nyttar/",
+      "kontrollert": "2026-11-08"
+    },
+    "fapriv": {
+      "tittel": "Fagne: forklaring for småkunder – bruk næringssatser i regningen",
+      "url": "https://fagne.no/kunde-og-nettleie/nettleie-priser-og-vilkar/priser-privatkunder/",
+      "kontrollert": "2026-11-08"
+    },
+    "nvekart": {
+      "tittel": "NVE: områdekonsesjoner, geografiske polygoner",
+      "url": "https://gis3.nve.no/map/rest/services/Mapservices/Omradekonsesjoner/MapServer",
+      "kontrollert": "2026-11-08"
+    },
+    "nvestat": {
+      "tittel": "RME: nettleiestatistikk og lenker til API",
+      "url": "https://www.nve.no/reguleringsmyndigheten/publikasjoner-og-data/statistikk/nettleiestatistikk/",
+      "kontrollert": "2026-11-08"
+    },
+    "nvedata": {
+      "tittel": "NVE: beskrivelse av nettleiestatistikkens aggregering",
+      "url": "https://api.nve.no/doc/nettleietariffer/",
+      "kontrollert": "2026-11-08"
+    },
+    "skatt": {
+      "tittel": "Skatteetaten: avgift på elektrisk kraft, velg 2026",
+      "url": "https://www.skatteetaten.no/satser/elektrisk-kraft/",
+      "kontrollert": "2026-11-08"
+    },
+    "li1": {
+      "tittel": "Linja: nettleigeprisar næringskundar 1. januar 2026, åpnet fra Bedrift-oversikten, side 1",
+      "url": "https://cdn.sanity.io/files/zg947p2r/production/806c196e04c4d4f32bab8dd898d22df3542f67cc.pdf",
+      "kontrollert": "2026-11-08"
+    },
+    "li7": {
+      "tittel": "Linja: tariffark fra juli, også tabeller i utvidet Bedrift-seksjon på nettsiden",
+      "url": "https://cdn.sanity.io/files/zg947p2r/production/aff53994bea7482c7bc3cb0f79b22b188396e26b.pdf",
+      "kontrollert": "2026-11-08"
+    },
+    "ngold": {
+      "tittel": "Tidligere Norgesnetts informasjon om måling av effekt; eldre side kan ha flyttet. Bruk PDF-arkiv og faktura i overgangsperioden.",
+      "url": "https://norgesnett.no/kunde/nettleie-naering/",
+      "kontrollert": "2026-11-08"
+    },
+    "rmeprod": {
+      "tittel": "RME: plusskunder og grensen for innmating i tilknytningspunktet",
+      "url": "https://www.nve.no/reguleringsmyndigheten/kunde/stroemnettet/prosumenter-og-plusskunder/",
+      "kontrollert": "2026-11-08"
+    },
+    "adresse": {
+      "tittel": "Kartverkets adresse-API – geokoding, ikke bekreftelse på nettleieavtale",
+      "url": "https://ws.geonorge.no/adresser/v1/",
+      "kontrollert": "2026-11-08"
+    },
+    "faark": {
+      "tittel": "Fagnes egen næringsside, arkivkopi 6. mars 2026. Prislisten er merket gjeldende fra 1. mars 2024. Les sammen med nyttårsmeldingen og gjeldende prisliste fra juli.",
+      "url": "https://web.archive.org/web/20260306212817/https://fagne.no/kunde-og-nettleie/nettleie-priser-og-vilkar/naeringskunder/",
+      "kontrollert": "2026-11-08"
+    },
+    "gnjultekst": {
+      "tittel": "Norgesnetts opprinnelige juli-melding, beskriver også sesong. Ved omdirigering, bruk PDF i Glitres arkiv.",
+      "url": "https://norgesnett.no/aktuelt/prisen-pa-nettleie-settes-opp-1-juli/",
+      "kontrollert": "2026-11-08"
+    },
+    "elprod": {
+      "tittel": "Elvia: prosument og fastledd for innmating",
+      "url": "https://www.elvia.no/smart-forbruk/solceller-og-stromproduksjon/prosumenter/",
+      "kontrollert": "2026-11-08"
+    },
+    "etprod": {
+      "tittel": "Etna Nett: plusskunde og lenke til avtale",
+      "url": "https://etna.no/plusskunde",
+      "kontrollert": "2026-11-08"
+    },
+    "vvprod": {
+      "tittel": "Vevig: pris for innmating fra plusskunder",
+      "url": "https://vevig.no/maling-og-avregning/plusskunder/",
+      "kontrollert": "2026-11-08"
+    },
+    "nv7kontroll": {
+      "tittel": "Nordvest Nett: privat tariff fra juli. Kun krysskontroll av avgiftsmerking i næringstabellen; ikke bruk privatsatsene som næringstariff.",
+      "url": "https://www.nvn.no/nettleige/nettleie-privatkunder",
+      "kontrollert": "2026-11-08"
+    }
+  }
+}

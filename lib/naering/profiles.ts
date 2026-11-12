@@ -166,3 +166,57 @@ export function chargingProfile(
     },
   };
 }
+
+/**
+ * Ladeprofil for salg til kjøretøy (DC-lader): effekt × utnyttelse i ladevinduet på valgte dager.
+ * Gir også største mulige volum (100 % utnyttelse), så et oppgitt volum kan kontrolleres.
+ * Effekten er samlet for alle uttak. Timeverdiene er energi (kWh) per klokketime.
+ */
+export function chargeSaleProfile(
+  year: number,
+  c: { powerKw: number; weekdays: number[]; window: [number, number]; skipHolidays: boolean; utilizationPct: number },
+): { series: TimeSeries; kwh: number; maxKwh: number; days: number; hoursPerDay: number } {
+  const start = osloLocalToUtc(year, 1, 1, 0)[0];
+  const n = hoursInYear(year);
+  const holidays = norwegianHolidays(year);
+  const z = (x: number) => String(x).padStart(2, "0");
+  const v = new Float64Array(n);
+  const [a, b] = c.window[1] > c.window[0] ? c.window : [c.window[0], c.window[1] + 24];
+  const perHour = c.powerKw * (c.utilizationPct / 100);
+  const days = new Set<string>();
+  let kwh = 0, maxKwh = 0;
+  for (let i = 0; i < n; i++) {
+    const t = start + i * HOUR;
+    const lp = osloParts(t);
+    // Vinduet tilhører dagen det starter (kl. 22–02 går over midnatt)
+    const startDay = lp.hour < a && b > 24 ? osloParts(t - 24 * HOUR) : lp;
+    const hour = lp.hour < a && b > 24 ? lp.hour + 24 : lp.hour;
+    if (hour < a || hour >= b) continue;
+    if (!c.weekdays.includes(startDay.weekday)) continue;
+    const key = `${startDay.year}-${z(startDay.month)}-${z(startDay.day)}`;
+    if (c.skipHolidays && holidays.has(key)) continue;
+    days.add(key);
+    v[i] = perHour;
+    kwh += perHour;
+    maxKwh += c.powerKw;
+  }
+  return {
+    series: {
+      kind: "forbruk",
+      startUtc: start,
+      resolutionMin: 60,
+      values: v,
+      unit: "kWh",
+      provenance: {
+        status: "antatt",
+        source: `Ladeprofil: ${c.powerKw} kW × ${c.utilizationPct} % kl. ${z(c.window[0])}–${z(c.window[1])}, ${days.size} dager`,
+        period: { from: `${year}-01-01`, to: `${year}-12-31` },
+        note: "Antatt profil (ikke målt).",
+      },
+    },
+    kwh,
+    maxKwh,
+    days: days.size,
+    hoursPerDay: b - a,
+  };
+}
