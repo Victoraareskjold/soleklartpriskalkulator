@@ -27,18 +27,24 @@ export const POST = handler<{ id: string }>(async (req, { id }) => {
       select id, result, input from calc.quote_versions where id = ${input.quoteVersionId} and calculation_id = ${id}`;
     if (!version) throw new HttpError(404, "Fant ikke versjonen", "NOT_FOUND");
 
-    const [estimate] = await tx<{ signed_at: Date | null; simulation_pdf_url: string | null; battery_section: unknown }[]>`
-      select signed_at, price_data->>'simulationPdfUrl' as simulation_pdf_url, price_data->'batterySection' as battery_section
+    const [estimate] = await tx<{ signed_at: Date | null; simulation_pdf_url: string | null; battery_section: unknown; business_analysis: unknown }[]>`
+      select signed_at, price_data->>'simulationPdfUrl' as simulation_pdf_url, price_data->'batterySection' as battery_section,
+             price_data->'businessAnalysis' as business_analysis
       from public.estimates where id = ${input.estimateId} for update`;
     if (estimate.signed_at) throw new HttpError(409, "Estimatet er signert og kan ikke endres", "SIGNED");
 
     // Batteritillegg og standardverdier kommer fra den låste versjonen. Eldre versjoner uten dem
     // beholder estimatets egen batterySection.
-    const priceData = priceDataFor(version.result, version.input, {
-      quoteVersionId: version.id,
-      simulationPdfUrl: estimate.simulation_pdf_url,
-      keepBatterySection: estimate.battery_section,
-    });
+    // Næring: businessAnalysis ble låst sammen med versjonen og lagt i estimatet av dashboardet.
+    // priceDataFor kjenner ikke til den, så den må tas vare på her, ellers forsvinner den ved koblingen.
+    const priceData = {
+      ...priceDataFor(version.result, version.input, {
+        quoteVersionId: version.id,
+        simulationPdfUrl: estimate.simulation_pdf_url,
+        keepBatterySection: estimate.battery_section,
+      }),
+      ...(estimate.business_analysis ? { businessAnalysis: estimate.business_analysis } : {}),
+    };
     await tx`
       update public.estimates
       set price_data = ${asJson(priceData)}, quote_version_id = ${version.id}, updated_at = now()
