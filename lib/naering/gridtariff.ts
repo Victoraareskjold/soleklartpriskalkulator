@@ -228,6 +228,14 @@ export interface MonthGrid {
   powerMissing: string | null;
 }
 
+/** Effektleddet for en måned slik batteristyringen ser det (se nordic.ts). */
+export type PlannerPower =
+  | { model: "ingen" }
+  /** kr per kW av månedens effektgrunnlag */
+  | { model: "sats"; nokPerKw: number }
+  | { model: "trinn"; trinn: { til_kw: number | null; kr_per_mnd: number }[]; grenser: string | null; treDoegn: boolean }
+  | { model: "blokker"; blokker: { til_kw: number | null; kr_per_kw_mnd: number }[] };
+
 export interface CompiledTariff {
   kind: "nettariff-v1" | "eldre";
   /** Energiledd uttak, kr/kWh, for timen (lokal tid) */
@@ -238,6 +246,8 @@ export interface CompiledTariff {
   inWindow(lp: LocalDate & { hour: number; weekday: number }): boolean;
   /** Omtrentlig kostnad per kW økt månedstopp (kr), brukt av batteristyringen */
   plannerRate(lp: LocalDate): number;
+  /** Effektleddet for måneden datoen ligger i, for batteristyringen */
+  plannerPower(lp: LocalDate): PlannerPower;
   /** Effekten måles per kvarter (ellers klokketime) */
   quarterMeasure: boolean;
   /** Avregning for måneden */
@@ -301,6 +311,7 @@ function compileLegacy(t: Tariff): CompiledTariff {
       lp.hour < pw.window.toHour &&
       !(pw.window.excludeHolidays && hol(lp.year).has(isoOf(lp))),
     plannerRate: peakRateAt,
+    plannerPower: (d) => (pw ? { model: "sats", nokPerKw: peakRateAt(d) } : { model: "ingen" }),
     quarterMeasure: pw?.resolution === "kvarter",
     month: (m, _dayMax, peakKw) => {
       const fixedNokPerYear = t.fixedNokPerYear;
@@ -435,6 +446,18 @@ function compileGrid(def: GridTariffDefinition, opts: CompileOptions): CompiledT
     return 0;
   };
 
+  const plannerPower = (d: LocalDate): PlannerPower => {
+    const v = at(d).v;
+    if (!v) return { model: "ingen" };
+    const p = v.kapasitet_eller_effekt;
+    if (powerProblem(p) || p.grunnlag === "paastemplet_kw_avtalt_anlegg") return { model: "ingen" };
+    if (p.modell === "ett_kapasitetstrinn" && p.trinn?.length)
+      return { model: "trinn", trinn: p.trinn, grenser: p.grenser ?? null, treDoegn: p.grunnlag === "snitt_av_tre_hoeyeste_doegnmakser_ulike_datoer" };
+    if (p.modell === "marginale_effektblokker" && p.blokker?.length) return { model: "blokker", blokker: p.blokker };
+    if (p.modell === "pris_ganger_kw") return { model: "sats", nokPerKw: rateAt(p, d.month) };
+    return { model: "ingen" };
+  };
+
   const month: CompiledTariff["month"] = (m, dayMax) => {
     const first = { year: m.year, month: m.month, day: 1 };
     const { v, shiftedFrom } = at(first);
@@ -492,6 +515,7 @@ function compileGrid(def: GridTariffDefinition, opts: CompileOptions): CompiledT
       return !powerProblem(p) && p.grunnlag !== "paastemplet_kw_avtalt_anlegg";
     },
     plannerRate,
+    plannerPower,
     quarterMeasure: firstMeasure === 15,
     month,
     notes,

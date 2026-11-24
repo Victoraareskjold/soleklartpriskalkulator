@@ -15,15 +15,19 @@
 //   salg     = eksport × (spot − fratrekk)       (kan bli negativ ved negative priser)
 //
 // Batteriet: én samlet energibalanse og ladetilstand gjennom hele perioden (se battery.ts).
-// Start- og sluttbeholdning er lik (reservenivået), så tom- eller fullt batteri ved start/slutt gir ingen gratis energi.
+// Smartstyringen er Nordic Solergy sin planlegger (se nordic.ts); motoren gjennomfører planen innenfor
+// batteriets og tilknytningens grenser og fører regnskapet.
+// Startbeholdningen er reservenivået (smart: planens nivå ved periodens start). Avvik mellom start- og
+// sluttbeholdning verdsettes til siste times kraftpris, så batteriet aldri gir gratis energi.
 
 import type { TimeSeries } from "./types";
 import type { BuyAgreement, SellAgreement, Taxes, Tariff } from "./tariff";
 import { fmtLocal, osloParts } from "./time";
-import { planHorizon, type BatteryConfig } from "./battery";
+import type { BatteryConfig } from "./battery";
 import { compileTariff, type MonthGrid } from "./gridtariff";
+import { planNordic } from "./nordic";
 
-export const ENGINE_VERSION = "naering-0.4.0";
+export const ENGINE_VERSION = "naering-0.5.0";
 
 export type { BatteryConfig };
 
@@ -124,7 +128,7 @@ export interface ChargingMonth {
 export interface EngineResult {
   months: MonthResult[];
   total: Omit<MonthResult, "month" | "peakAt" | "days" | "peakKw"> & { days: number };
-  checks: { maxBalanceErrorKwh: number; intervals: number; batteryBalanceErrorKwh?: number; endSocKwh?: number; startSocKwh?: number };
+  checks: { maxBalanceErrorKwh: number; intervals: number; batteryBalanceErrorKwh?: number; endSocKwh?: number; startSocKwh?: number; /** Smart: sum av avvik mellom gjennomført batterieffekt og Nordic Solergy-planen (kWh) */ smartPlanDeviationKwh?: number };
   /** Forbehold fra tariffen: sperrer, antakelser, manglende regler og satser lånt fra et annet år */
   tariffNotes: { notes: string[]; missing: string[]; shiftedFrom: string[] };
   /** Timeverdier for batteriet (for døgnutsnitt). Bare når batteri er med. */
@@ -258,6 +262,7 @@ export function simulate(inp: EngineInput): EngineResult {
   const buyNok = new Float64Array(n), sellNok = new Float64Array(n), energyNok = new Float64Array(n), elNok = new Float64Array(n), exportNok = new Float64Array(n);
   const dayKey: string[] = new Array(n);
   const win = new Uint8Array(n), monthIdx = new Int32Array(n), hourOfDay = new Int8Array(n), minuteOf = new Int8Array(n);
+  const yearOf = new Int16Array(n), monthOf = new Int8Array(n), dayOf = new Int8Array(n);
   const peakRate = new Float64Array(n);
   const monthKeys: string[] = [];
   const monthDays: Set<number>[] = [];
@@ -281,6 +286,9 @@ export function simulate(inp: EngineInput): EngineResult {
     const lp = osloParts(t);
     hourOfDay[i] = lp.hour;
     minuteOf[i] = lp.minute;
+    yearOf[i] = lp.year;
+    monthOf[i] = lp.month;
+    dayOf[i] = lp.day;
     const key = `${lp.year}-${z(lp.month)}`;
     let mi = monthKeys.indexOf(key);
     if (mi < 0) {
@@ -319,14 +327,28 @@ export function simulate(inp: EngineInput): EngineResult {
   const etaC = bat ? Math.sqrt(Math.max(0.5, Math.min(1, bat.roundTrip))) : 1;
   const etaD = etaC;
   let soc = eMin;
-  let socSol = 0; // solandelen av energien over reservenivået (for egenbruk-regnskapet)
+  // Smartstyring: Nordic Solergy-planen for hele perioden, regnet på forhånd (se nordic.ts)
+  let smartB: Float64Array | null = null;
+  const batteryNotes: string[] = [];
+  if (bat && bat.strategy === "smart" && eMax - eMin > 1e-6) {
+    const net = new Float64Array(n);
+    for (let i = 0; i < n; i++) net[i] = L[i] + aux - P[i];
+    const r = planNordic({
+      n, fromUtc: from, stepMin: stepMin as 15 | 60, year: yearOf, month: monthOf, day: dayOf, hour: hourOfDay, net, buyNok, sellNok, tariff: ct,
+      kapKwh: eMax - eMin, kw: Math.min(bat.chargeKw, bat.dischargeKw), eta: etaC, gridCharge: bat.gridCharge,
+    });
+    smartB = r.b;
+    soc = Math.min(eMax, eMin + r.startKwh);
+    batteryNotes.push(...r.notes);
+  }
+  // Solandelen av energien over reservenivået (for egenbruk-regnskapet). Startbeholdningen regnes som kjøpt.
+  let socSol = 0;
   const startSoc = soc;
-  let plan: { b: Float64Array; grid: Float64Array; mv: Float64Array; imp: Float64Array } | null = null;
-  let planStart = 0;
   const hourly = bat
     ? { startUtc: from, stepMin, soc: new Float64Array(n), battery: new Float64Array(n), price: new Float32Array(n), load: new Float32Array(n), pv: new Float32Array(n) }
     : undefined;
   let socIn = 0, socOut = 0;
+  let planDev = 0; // smart: hvor mye gjennomføringen avviker fra Nordic Solergy-planen (kWh, sum over intervallene)
 
   let maxErr = 0;
   let hourImp = 0; // import i inneværende time (for effektledd målt per time ved kvartersoppløsning)
@@ -335,7 +357,7 @@ export function simulate(inp: EngineInput): EngineResult {
     const Li = L[i] + aux;
     const Pi = P[i];
     let b = 0;
-    const curtail = !!bat && bat.strategy === "smart" && sellNok[i] < 0; // smartstyring selger ikke sol til negativ pris
+    const curtail = false; // som i Nordic Solergys beregning: overskudd selges også ved negativ pris
 
     if (bat && eMax > 0) {
       const net = Li - Pi;
@@ -347,59 +369,17 @@ export function simulate(inp: EngineInput): EngineResult {
         if (net < 0) b = -Math.min(-net, Math.max(0, maxC), sharedAc);
         else b = Math.min(net, Math.max(0, maxD));
       } else {
-        // Smartstyring: ny plan kl. 13 hver dag (da morgendagens priser er kjent) og ved start
-        if (i === 0 || (hourOfDay[i] === 13 && minuteOf[i] === 0)) {
-          plan = planHorizon(
-            {
-              n, i0: i, L, C: chg ? C : undefined, P, aux, buyNok, sellNok, win, peakRate, monthIdx, hourOfDay, minuteOf, stepH,
-              curPeak: m.peakKw, eMin, eMax, etaC, etaD, expLim, impLim, sharedAc,
-            },
-            bat,
-            soc,
-          );
-          planStart = i;
-        }
-        const want = plan ? (plan.b[i - planStart] ?? 0) : 0;
-        const plannedGrid = plan ? (plan.grid[i - planStart] ?? 0) : 0;
-        // Verdien av lagret energi ifølge planen (kr per kWh DC)
-        const mv = plan ? (plan.mv[i - planStart] ?? 0) : 0;
-        b = want;
-        // Gjennomfør planen så langt det faktisk går med virkelig forbruk og sol
+        // Smartstyring: Nordic Solergy-planen, gjennomført så langt batteriet og tilknytningen tillater
+        b = smartB ? smartB[i] : 0;
         if (b < 0) {
           let c = Math.min(-b, Math.max(0, maxC));
-          // Lading som var ment å komme fra sol, hentes ikke fra nettet når solen svikter
-          c = Math.min(c, Math.max(0, -net) + plannedGrid);
           if (!bat.gridCharge) c = Math.min(c, Math.max(0, -net));
           // Lading fra nett går gjennom inverteren
           c = Math.min(c, Math.max(0, -net) + sharedAc);
           // Ikke lad over importgrensen
-          const impNoCharge = Math.max(net, 0);
-          const room = impLim - impNoCharge + Math.max(0, -net);
+          const room = impLim - Math.max(net, 0) + Math.max(0, -net);
           c = Math.min(c, Math.max(0, room));
           b = -c;
-        }
-        // Avvik fra prognosen: uventet overskudd lagres, og uventet underskudd dekkes, når det lønner seg
-        // etter planens verdi av lagret energi (samme vurdering som planen ville gjort).
-        if (b <= 0 && net < 0) {
-          const extra = Math.min(-net - Math.max(0, -b), Math.max(0, maxC) + b, sharedAc);
-          if (extra > 1e-9 && Math.max(sellNok[i], 0) < mv * etaC) b -= extra;
-        } else if (b >= 0 && net > 0 && !(win[i] && peakRate[i] > 0)) {
-          // (I effektvinduet styres utladingen av planen og effektstyringen under, så energi spart til toppen ikke brukes opp.)
-          const extra = Math.min(net - b, Math.max(0, maxD) - b);
-          if (extra > 1e-9 && buyNok[i] > mv / etaD + bat.wearNokPerKwh) b += extra;
-        }
-        // Sanntids effektvakt: blir importen høyere enn planen regnet med og over månedens topp så langt,
-        // lades det ut for å holde toppen (styringen måler effekten løpende – ingen fasit brukes).
-        if (win[i] && peakRate[i] > 0) {
-          const expected = plan ? (plan.imp[i - planStart] ?? 0) : 0;
-          const cap = Math.max(m.peakKw * stepH, expected);
-          const imp = net - b;
-          if (imp > cap + 1e-9) {
-            const add = imp - cap;
-            b = b < 0 ? Math.min(0, b + add) : b; // dropp først planlagt lading
-            const still = net - b - cap;
-            if (still > 1e-9) b = Math.min(b + still, Math.max(0, maxD));
-          }
         }
         if (b > 0) {
           let d = Math.min(b, Math.max(0, maxD));
@@ -411,6 +391,7 @@ export function simulate(inp: EngineInput): EngineResult {
 
     const f = hourFlow(Li, Pi, b, expLim, curtail);
     b = f.b;
+    if (smartB) planDev += Math.abs(b - smartB[i]);
     // Batteriets tilstand
     if (bat && eMax > 0) {
       const before = soc;
@@ -507,9 +488,10 @@ export function simulate(inp: EngineInput): EngineResult {
   let batteryBalanceErr: number | undefined;
   if (bat && eMax > 0) {
     const leftover = soc - startSoc;
-    if (leftover > 1e-6 && n > 0) {
+    if (Math.abs(leftover) > 1e-6 && n > 0) {
       const last = months[monthIdx[n - 1]];
-      last.cost.kraft -= leftover * etaD * buyPrice(S[n - 1]);
+      // Mer igjen enn ved start: verdt det den sparer. Mindre igjen: må kjøpes tilbake.
+      last.cost.kraft -= leftover > 0 ? leftover * etaD * buyPrice(S[n - 1]) : (leftover / etaC) * buyPrice(S[n - 1]);
     }
     batteryBalanceErr = Math.abs(startSoc + socIn - socOut - soc);
     for (const m of months)
@@ -567,9 +549,9 @@ export function simulate(inp: EngineInput): EngineResult {
   return {
     months: list,
     total,
-    checks: { maxBalanceErrorKwh: maxErr, intervals: n, ...(bat ? { batteryBalanceErrorKwh: batteryBalanceErr, startSocKwh: startSoc, endSocKwh: soc } : {}) },
+    checks: { maxBalanceErrorKwh: maxErr, intervals: n, ...(bat ? { batteryBalanceErrorKwh: batteryBalanceErr, startSocKwh: startSoc, endSocKwh: soc } : {}), ...(smartB ? { smartPlanDeviationKwh: planDev } : {}) },
     hourly,
-    tariffNotes: { notes: [...ct.notes], missing: [...ct.missing], shiftedFrom: [...ct.shifted] },
+    tariffNotes: { notes: [...ct.notes, ...batteryNotes], missing: [...ct.missing], shiftedFrom: [...ct.shifted] },
   };
 }
 

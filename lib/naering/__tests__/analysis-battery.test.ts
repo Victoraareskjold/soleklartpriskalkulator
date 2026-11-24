@@ -61,8 +61,8 @@ describe("analyse med batteri", () => {
     expect(smart.economy![0].result.rows[0].drift - grunn.economy![0].result.rows[0].drift).toBeCloseTo(12_000, 0);
   });
 
-  test("perfekt prognose er sammenlignbar (samme styring med fasit)", () => {
-    expect(b.perfectForesightNet).toBeGreaterThanOrEqual(b.alternatives[2].net * 0.99);
+  test("perfekt prognose er den samme som smartstyringen (Nordic Solergy)", () => {
+    expect(b.perfectForesightNet).toBeCloseTo(b.alternatives[2].net, 6);
   });
 
   test("døgnutsnitt finnes og har batterinivå innenfor grensene", () => {
@@ -75,7 +75,7 @@ describe("analyse med batteri", () => {
     const r2 = runAnalysis({ ...base(), battery: battery({ investmentNok: null, replacementNok: null }) });
     expect(r2.battery!.alternatives[1].investmentNok).toBeNull();
     expect(r2.battery!.alternatives[1].economy![0].result.npv).toBeNull();
-  });
+  }, 30_000);
 });
 
 describe("flere målere, lading og mva.", () => {

@@ -229,7 +229,7 @@ export interface BatteryAnalysis {
   }[];
   /** Batteriets merverdi med grunnstyring (grunn − sol) og smartstyringens merverdi etter gebyr (smart − grunn) i analyseåret */
   value: { grunn: number; smart: number; smartFee: number };
-  /** Samme styring med perfekt prognose (fasit for forbruk og sol) – en referanse, ikke oppnåelig i praksis */
+  /** Samme som smart: Nordic Solergys styring kjenner forbruk og sol. Beholdt for lagrede analyser. */
   perfectForesightNet: number;
   /** Døgnutsnitt fra smartstyringen: dagen med mest batteribruk */
   day: { date: string; hours: { hour: number; price: number; soc: number; battery: number; load: number; pv: number }[] } | null;
@@ -425,6 +425,8 @@ export function runAnalysis(inp: AnalysisInput): AnalysisResult {
   // Laderen regnes sammen med tilbudets løsning: smart batteristyring når tilbudet har batteri, ellers solceller alene
   const chargerBase: AlternativeKey = bat ? "smart" : "sol";
   const simAll = (alt: "før" | AlternativeKey | "perfekt" | "lader", t = 1): EngineResult => {
+    // Nordic Solergys styring kjenner forbruk og sol, så «perfekt prognose» er den samme beregningen
+    if (alt === "perfekt") return simAll("smart", t);
     const key = `${alt}:${t}`;
     const hit = cache.get(key);
     if (hit) return hit;

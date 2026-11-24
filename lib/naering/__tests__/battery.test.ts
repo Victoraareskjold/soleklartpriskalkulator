@@ -68,10 +68,10 @@ describe("batteri", () => {
     expect(g.total.cost.netto).toBeLessThan(pvOnly.total.cost.netto);
   });
 
-  test("perfekt prognose gir omtrent samme eller bedre resultat (innen 1 %) som persistens", () => {
+  test("perfekt prognose og persistens gir samme resultat (Nordic Solergys styring kjenner forbruk og sol)", () => {
     const s = simulate({ ...base, pv, battery: bat({ strategy: "smart", forecast: "persistens" }) });
     const p = simulate({ ...base, pv, battery: bat({ strategy: "smart", forecast: "perfekt" }) });
-    expect(p.total.cost.netto).toBeLessThanOrEqual(s.total.cost.netto * 1.01);
+    expect(p.total.cost.netto).toBeCloseTo(s.total.cost.netto, 6);
   });
 
   test("flate priser: ulønnsom handel unngås (ingen nettlading for å selge eller lagre)", () => {
@@ -105,8 +105,9 @@ describe("batteri", () => {
     // Elavgift betales også av ladestrømmen: mer import gir mer elavgift totalt
     expect(s.total.importKwh).toBeGreaterThan(none.total.importKwh);
     expect(s.total.cost.elavgift).toBeGreaterThan(none.total.cost.elavgift);
-    // Styringen skal ikke skape høyere effekttopper enn den sparer
-    expect(s.total.cost.effektledd).toBeLessThanOrEqual(none.total.cost.effektledd + 1);
+    // Nordic Solergys styring kapper toppene bare når det lønner seg mer enn prishandel (beskrivelsen punkt 4.5):
+    // her er prisforskjellen stor og effektsatsen lav, så effektleddet kan øke – men regningen blir lavere.
+    expect(s.total.cost.netto).toBeLessThan(none.total.cost.netto);
   });
 
   test("hjelpelast og nødstrømsreserve reduserer gevinsten", () => {
